@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งเตือนข่าวสารใหม่</title>
+</head>
+<body>
+    <h2>แจ้งเตือนข่าวสารใหม่</h2>
+    <p>หัวข้อ: {{ news.topic }}</p>
+    <p>รายละเอียด: {{ news.detail }}</p>
+    {% if news.url %}
+    <p>ลิงก์เพิ่มเติม: <a href="{{ news.url }}">{{ news.url }}</a></p>
+    {% endif %}
+    <p>ขอบคุณที่ใช้บริการของเรา</p>
+</body>
+</html>

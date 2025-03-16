@@ -1,0 +1,73 @@
+{% extends 'base2.html' %}
+{% block title %}เพิ่มข่าวสาร{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-6 px-3 max-w-xl">
+    <div class="relative mb-6 text-center">
+        <h1 class="text-2xl font-bold text-[#19335A] inline-block">
+            <span class="relative z-10">แจ้งข่าวสาร</span>
+        </h1>
+    </div>
+    
+    <!-- แสดงฟอร์ม -->
+    <div class="bg-white p-4 rounded-md border-0">
+        <div class="flex items-center mb-4">
+            <div class="w-1 h-6 bg-blue-500 rounded-full mr-2"></div>
+            <h3 class="text-lg font-medium text-gray-700">กรอกรายละเอียด</h3>
+        </div>
+        
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label for="title" class="block text-gray-700 text-sm font-medium mb-1">หัวข้อ:</label>
+                {{ form.topic|safe }}
+            </div>
+            
+            <div>
+                <label for="description" class="block text-gray-700 text-sm font-medium mb-1">รายละเอียด:</label>
+                {{ form.detail|safe }}
+            </div>
+            
+            <div>
+                <label for="link" class="block text-gray-700 text-sm font-medium mb-1">ลิงก์:</label>
+                {{ form.url|safe }}
+            </div>
+            
+            <div class="pt-1">
+                <button type="submit" class="w-full bg-[#2563EB] text-white py-2 px-3 rounded-md hover:bg-[#1E4BB5] transition-all font-medium flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    บันทึกข่าวสาร
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="text-center mt-3 text-gray-500 text-xs">
+        <p>หลังจากบันทึกข่าวสารแล้ว จะแสดงในหน้าประกาศข่าวทันที</p>
+    </div>
+</div>
+
+<style>
+    /* Custom styling for form inputs */
+    input[type="text"], input[type="url"], textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #edf0f7;
+        border-radius: 0.25rem;
+        transition: all 0.15s;
+    }
+    
+    input[type="text"]:focus, input[type="url"]:focus, textarea:focus {
+        outline: none;
+        border-color: #bfdbfe;
+        box-shadow: 0 0 0 2px rgba(144, 205, 244, 0.15);
+    }
+    
+    textarea {
+        min-height: 100px;
+    }
+</style>
+{% endblock %}

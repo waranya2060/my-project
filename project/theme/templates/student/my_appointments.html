@@ -1,0 +1,391 @@
+{% extends 'base.html' %}
+
+{% block title %}การนัดหมายของฉัน{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen pb-12">
+    <!-- หัวข้อหลัก แบบสีน้ำเงินเข้มให้เข้ากับ Header -->
+    <div class="relative bg-gradient-to-r  to-blue-900 py-8 px-4 mb-8 ">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-2xl font-bold text-black mb-1">
+                <i class="fas fa-calendar-check mr-3"></i>การนัดหมายของฉัน
+            </h2>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- สรุปสถิติ แบบการ์ดที่เข้ากับโทนสี -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-yellow-500 flex items-center transition-transform hover:scale-105">
+                <div class="rounded-full bg-yellow-100 p-3 mr-3">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">รอการอนุมัติ</p>
+                    <p class="text-xl font-bold text-gray-800">{{ pending_appointments|length }}</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500 flex items-center transition-transform hover:scale-105">
+                <div class="rounded-full bg-green-100 p-3 mr-3">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">อนุมัติแล้ว</p>
+                    <p class="text-xl font-bold text-gray-800">{{ accepted_appointments|length }}</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-red-500 flex items-center transition-transform hover:scale-105">
+                <div class="rounded-full bg-red-100 p-3 mr-3">
+                    <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">ถูกปฏิเสธ</p>
+                    <p class="text-xl font-bold text-gray-800">{{ rejected_appointments|length }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- การนัดหมายที่รอการอนุมัติ -->
+        <div class="mb-10">
+            <div class="flex items-center mb-4">
+                <div class="bg-yellow-100 p-2 rounded-full mr-3">
+                    <i class="fas fa-hourglass-half text-yellow-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-yellow-700">รอการอนุมัติ</h3>
+            </div>
+            
+            {% if pending_appointments %}
+            <div class="space-y-4">
+                {% for appointment in pending_appointments %}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-yellow-200">
+                    <div class="bg-yellow-50 px-4 py-2 border-b border-yellow-100">
+                        <div class="flex justify-between items-center">
+                            <p class="font-semibold text-gray-800">
+                                {{ appointment.project.topic }}
+                            </p>
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                                รอการอนุมัติ
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="far fa-calendar-alt mr-2 text-yellow-600"></i>
+                                    <strong>วันที่:</strong> {{ appointment.date|date:"j F Y" }}
+                                </p>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="far fa-clock mr-2 text-yellow-600"></i>
+                                    <strong>เวลา:</strong> {{ appointment.time_start }} - {{ appointment.time_finish }}
+                                </p>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="fas fa-user-tie mr-2 text-yellow-600"></i>
+                                    <strong>อาจารย์ที่ปรึกษา:</strong> 
+                                    {{ appointment.project.advisor.get_full_name }}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="fas fa-users mr-2 text-yellow-600"></i>
+                                    <strong>กรรมการ:</strong>
+                                </p>
+                                <ul class="list-disc pl-8 text-gray-700">
+                                    {% for committee_member in appointment.project.committee.all %}
+                                        <li>{{ committee_member.get_full_name }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {% if appointment.project.files.all %}
+                        <div class="mt-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-paperclip text-yellow-600 mr-2"></i>
+                                <p class="text-sm font-medium text-gray-700">ไฟล์แนบ:</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                {% for file in appointment.project.files.all %}
+                                    {% if file.file and file.file.name or file.url %}
+                                        <a href="{% if file.file and file.file.name %}{{ file.file.url }}{% else %}{{ file.url }}{% endif %}" 
+                                           class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-200 transition-colors duration-200" 
+                                           target="_blank">
+                                            {% if '.pdf' in file.file.name|default:file.url %}
+                                                <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                                            {% elif '.ppt' in file.file.name|default:file.url or '.pptx' in file.file.name|default:file.url %}
+                                                <i class="fas fa-file-powerpoint text-orange-500 mr-2"></i>
+                                            {% elif '.doc' in file.file.name|default:file.url or '.docx' in file.file.name|default:file.url %}
+                                                <i class="fas fa-file-word text-blue-500 mr-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-file text-gray-500 mr-2"></i>
+                                            {% endif %}
+                                            <span class="text-sm truncate max-w-xs">
+                                                {% if file.file and file.file.name %}
+                                                    {{ file.file.name|slice:"-20:" }}
+                                                {% else %}
+                                                    {{ file.url|slice:"-20:" }}
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" alt="ไม่มีการนัดหมาย" class="w-20 h-20 mx-auto mb-4 opacity-50">
+                <p class="text-gray-500">ไม่มีการนัดหมายที่รอการอนุมัติ</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- การนัดหมายที่ได้รับการอนุมัติ -->
+        <div class="mb-10">
+            <div class="flex items-center mb-4">
+                <div class="bg-green-100 p-2 rounded-full mr-3">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-green-700">นัดหมายที่ได้รับการอนุมัติ</h3>
+            </div>
+            
+            {% if accepted_appointments %}
+            <div class="space-y-4">
+                {% for appointment in accepted_appointments %}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-green-200">
+                    <div class="bg-green-50 px-4 py-2 border-b border-green-100">
+                        <div class="flex justify-between items-center">
+                            <p class="font-semibold text-gray-800">
+                                {{ appointment.project.topic }}
+                            </p>
+                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                อนุมัติแล้ว
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="far fa-calendar-alt mr-2 text-green-600"></i>
+                                    <strong>วันที่:</strong> {{ appointment.date|date:"j F Y" }}
+                                </p>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="far fa-clock mr-2 text-green-600"></i>
+                                    <strong>เวลา:</strong> {{ appointment.time_start }} - {{ appointment.time_finish }}
+                                </p>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="fas fa-users mr-2 text-green-600"></i>
+                                    <strong>อาจารย์ที่เกี่ยวข้อง:</strong> 
+                                    {% for teacher in appointment.teachers.all %}
+                                        {{ teacher.get_full_name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="fas fa-user-tie mr-2 text-green-600"></i>
+                                    <strong>กรรมการ:</strong>
+                                </p>
+                                <ul class="list-disc pl-8 text-gray-700">
+                                    {% for committee_member in appointment.project.committee.all %}
+                                        <li>{{ committee_member.get_full_name }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {% if appointment.project.files.all %}
+                        <div class="mt-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-paperclip text-green-600 mr-2"></i>
+                                <p class="text-sm font-medium text-gray-700">ไฟล์แนบ:</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                {% for file in appointment.project.files.all %}
+                                    {% if file.file and file.file.name or file.url %}
+                                        <a href="{% if file.file and file.file.name %}{{ file.file.url }}{% else %}{{ file.url }}{% endif %}" 
+                                           class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-200 transition-colors duration-200" 
+                                           target="_blank">
+                                            {% if '.pdf' in file.file.name|default:file.url %}
+                                                <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                                            {% elif '.ppt' in file.file.name|default:file.url or '.pptx' in file.file.name|default:file.url %}
+                                                <i class="fas fa-file-powerpoint text-orange-500 mr-2"></i>
+                                            {% elif '.doc' in file.file.name|default:file.url or '.docx' in file.file.name|default:file.url %}
+                                                <i class="fas fa-file-word text-blue-500 mr-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-file text-gray-500 mr-2"></i>
+                                            {% endif %}
+                                            <span class="text-sm truncate max-w-xs">
+                                                {% if file.file and file.file.name %}
+                                                    {{ file.file.name|slice:"-20:" }}
+                                                {% else %}
+                                                    {{ file.url|slice:"-20:" }}
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- ฟอร์มกรอกข้อมูลหากยังไม่มี -->
+                        <form method="POST" class="mt-4">
+                            {% csrf_token %}
+                            <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+
+                            {% if not appointment.meeting_link and not appointment.location %}
+                                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-md mb-4">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-yellow-700 font-medium">กรุณากรอกข้อมูลสำหรับการประชุม</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- 🔗 กรอก Google Meet Link -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            <i class="fas fa-video mr-1 text-green-600"></i> ลิงก์ประชุม Google Meet:
+                                        </label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-link text-gray-400"></i>
+                                            </div>
+                                            <input type="url" name="meeting_link"
+                                                class="focus:ring-green-500 focus:border-green-500 block w-full pl-10 py-3 sm:text-sm border-gray-300 rounded-md"
+                                                placeholder="https://meet.google.com/xyz-123">
+                                        </div>
+                                    </div>
+
+                                    <!-- 📍 กรอกสถานที่ -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            <i class="fas fa-map-marker-alt mr-1 text-green-600"></i> สถานที่:
+                                        </label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-building text-gray-400"></i>
+                                            </div>
+                                            <input type="text" name="location"
+                                                class="focus:ring-green-500 focus:border-green-500 block w-full pl-10 py-3 sm:text-sm border-gray-300 rounded-md"
+                                                placeholder="เช่น ห้องประชุม A อาคารวิศวกรรม">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 flex justify-end">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                                        <i class="fas fa-save mr-2"></i> บันทึกข้อมูล
+                                    </button>
+                                </div>
+                            {% else %}
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 bg-green-50 p-4 rounded-lg">
+                                    {% if appointment.location %}
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <i class="fas fa-map-marker-alt text-green-600"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-gray-500">สถานที่</p>
+                                            <p class="text-gray-800 font-medium">{{ appointment.location }}</p>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if appointment.meeting_link %}
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <i class="fas fa-video text-green-600"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-gray-500">ลิงก์ประชุม</p>
+                                            <a href="{{ appointment.meeting_link }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                                                เข้าร่วมประชุมออนไลน์
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486774.png" alt="ไม่มีการนัดหมาย" class="w-20 h-20 mx-auto mb-4 opacity-50">
+                <p class="text-gray-500">ไม่มีการนัดหมายที่ได้รับการอนุมัติ</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- การนัดหมายที่ถูกปฏิเสธ -->
+        <div class="mb-10">
+            <div class="flex items-center mb-4">
+                <div class="bg-red-100 p-2 rounded-full mr-3">
+                    <i class="fas fa-times-circle text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-red-700">นัดหมายที่ถูกปฏิเสธ</h3>
+            </div>
+            
+            {% if rejected_appointments %}
+            <div class="space-y-4">
+                {% for appointment in rejected_appointments %}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-red-200">
+                    <div class="bg-red-50 px-4 py-2 border-b border-red-100">
+                        <div class="flex justify-between items-center">
+                            <p class="font-semibold text-gray-800">
+                                {{ appointment.project.topic }}
+                            </p>
+                            <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                                ถูกปฏิเสธ
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="far fa-calendar-alt mr-2 text-red-500"></i>
+                                    <strong>วันที่:</strong> {{ appointment.date|date:"j F Y" }}
+                                </p>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="far fa-clock mr-2 text-red-500"></i>
+                                    <strong>เวลา:</strong> {{ appointment.time_start }} - {{ appointment.time_finish }}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-gray-700 mb-2">
+                                    <i class="fas fa-users mr-2 text-red-500"></i>
+                                    <strong>อาจารย์ที่เกี่ยวข้อง:</strong> 
+                                    {% for teacher in appointment.teachers.all %}
+                                        {{ teacher.get_full_name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486780.png" alt="ไม่มีการนัดหมาย" class="w-20 h-20 mx-auto mb-4 opacity-50">
+                <p class="text-gray-500">ไม่มีการนัดหมายที่ถูกปฏิเสธ</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

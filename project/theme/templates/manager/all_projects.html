@@ -1,0 +1,162 @@
+{% extends 'base3.html' %}
+{% block header %}โครงงานทั้งหมด{% endblock %}
+{% block content %}
+<div class="p-6">
+    <h1 class="text-2xl font-bold mb-4">โครงงานทั้งหมดของนักศึกษา</h1>
+    
+    <!-- ค้นหาโครงงานตามปี -->
+    <div class="mb-6 bg-white p-4 rounded-lg shadow">
+        <form method="GET" class="flex flex-wrap items-end gap-4">
+            <div>
+                <label for="year" class="block text-sm font-medium text-gray-700 mb-1">ค้นหาตามปี</label>
+                <select name="year" id="year" class="p-2 border rounded-md w-40">
+                    <option value="">ทุกปี</option>
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition">
+                ค้นหา
+            </button>
+            {% if selected_year %}
+                <a href="{% url 'all_projects' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md transition">
+                    ล้างการค้นหา
+                </a>
+            {% endif %}
+        </form>
+    </div>
+    
+    <div class="flex justify-between items-center mb-4">
+        <!-- ปุ่มดาวน์โหลด CSV -->
+        <a href="{% url 'export_projects_csv' %}{% if selected_year %}?year={{ selected_year }}{% endif %}" 
+           class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition">
+            <i class="fas fa-download mr-2"></i> ดาวน์โหลด CSV
+        </a>
+        
+        <div class="text-sm text-gray-600">
+            พบ {{ project_data|length }} โครงงาน
+        </div>
+    </div>
+
+    <!-- ตารางแสดงข้อมูลโครงงาน -->
+    <div class="overflow-x-auto bg-white rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หัวข้อโครงงาน</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสนักศึกษา</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อนักศึกษา</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ปี</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อาจารย์ที่ปรึกษา</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กรรมการ</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for data in project_data %}
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 text-sm text-gray-900">{{ data.project_topic }}</td>
+                    <td class="p-3 text-sm text-gray-900">{{ data.student_id }}</td>
+                    <td class="p-3 text-sm text-gray-900">{{ data.student_name }}</td>
+                    <td class="p-3 text-sm text-gray-900">{{ data.year }}</td>
+                    <td class="p-3 text-sm text-gray-900">{{ data.advisor }}</td>
+                    <td class="p-3 text-sm text-gray-900">
+                        {% if data.committee %}
+                            {{ data.committee }}
+                        {% else %}
+                            <span class="text-gray-500">ไม่มีกรรมการ</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3 text-sm">
+                        <button onclick="openCommitteeModal('{{ data.project_id }}')" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded text-xs">
+                            แก้ไขกรรมการ
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="p-4 text-center text-gray-500">ไม่พบข้อมูลโครงงาน</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal สำหรับจัดการกรรมการ -->
+<div id="committeeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium">จัดการกรรมการโครงงาน</h3>
+            <button onclick="closeCommitteeModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="committeeForm" method="POST" action="{% url 'update_project_committee' %}">
+            {% csrf_token %}
+            <input type="hidden" name="project_id" id="project_id">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">เลือกกรรมการ</label>
+                <div class="border rounded-md p-3 max-h-60 overflow-y-auto">
+                    {% for teacher in all_teachers %}
+                    <div class="flex items-center mb-2">
+                        <input type="checkbox" name="committee" value="{{ teacher.id }}" 
+                               id="teacher-{{ teacher.id }}" class="committee-checkbox mr-2">
+                        <label for="teacher-{{ teacher.id }}" class="text-sm">
+                            {{ teacher.get_full_name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeCommitteeModal()" 
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md">
+                    ยกเลิก
+                </button>
+                <button type="submit" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md">
+                    บันทึก
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // ฟังก์ชันสำหรับเปิด Modal จัดการกรรมการ
+    function openCommitteeModal(projectId) {
+        document.getElementById('project_id').value = projectId;
+        
+        // ล้างการเลือกกรรมการทั้งหมด
+        document.querySelectorAll('.committee-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        
+        // ดึงข้อมูลกรรมการของโครงงาน
+        fetch(`/api/projects/${projectId}/committees/`)
+            .then(response => response.json())
+            .then(data => {
+                // เลือกกรรมการที่มีอยู่แล้ว
+                data.committee_ids.forEach(id => {
+                    const checkbox = document.getElementById(`teacher-${id}`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            });
+        
+        document.getElementById('committeeModal').classList.remove('hidden');
+    }
+    
+    // ฟังก์ชันสำหรับปิด Modal
+    function closeCommitteeModal() {
+        document.getElementById('committeeModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

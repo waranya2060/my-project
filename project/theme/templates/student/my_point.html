@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}คะแนนของฉัน{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">คะแนนของฉัน</h2>
+    <div class="flex items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="bg-blue-100 rounded-full p-3 mr-4">
+            <i class="fas fa-user-circle text-blue-600 text-xl"></i>
+        </div>
+        <div>
+            <p class="text-gray-500 text-sm">คะแนนของ</p>
+            <p class="text-gray-800 font-semibold text-lg">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+        </div>
+    </div>
+    
+    <!-- กรอบคะแนนหลักให้ยาวขึ้น -->
+    <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-lg w-full">
+        <!-- หัวข้อมีไอคอนประกอบ -->
+        <div class="flex items-center border-b border-gray-200 pb-4 mb-4">
+            <i class="fas fa-award text-orange-600 mr-3 text-xl"></i>
+            <h3 class="text-xl font-bold text-orange-900">คะแนนที่ได้รับ</h3>
+        </div>
+        
+        <!-- ตารางคะแนนปรับปรุงใหม่ -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <thead class="bg-orange-50">
+                    <tr>
+                        <th class="py-3 px-6 text-left text-sm font-semibold text-orange-900 border-b border-orange-100">หัวข้อโครงงาน</th>
+                        <th class="py-3 px-6 text-center text-sm font-semibold text-orange-900 border-b border-orange-100 w-32">คะแนนเฉลี่ย</th>
+                        <th class="py-3 px-6 text-left text-sm font-semibold text-orange-900 border-b border-orange-100">ความคิดเห็น</th>
+                        <th class="py-3 px-6 text-left text-sm font-semibold text-orange-900 border-b border-orange-100">อาจารย์ที่ให้คะแนน</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for score in project_scores %}
+                    <tr class="hover:bg-orange-50 transition-colors duration-200">
+                        <td class="py-4 px-6 text-sm text-gray-700 font-medium">
+                            {{ score.project.topic }}
+                        </td>
+                        <td class="py-4 px-6 text-center">
+                            <!-- คะแนนเฉลี่ยแบบวงกลมปรับปรุงใหม่ -->
+                            <div class="flex justify-center">
+                                {% if score.average_score >= 1 and score.average_score <= 30 %}
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
+                                        {{ score.average_score }}
+                                    </div>
+                                {% elif score.average_score > 30 and score.average_score <= 50 %}
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
+                                        {{ score.average_score }}
+                                    </div>
+                                {% elif score.average_score > 50 and score.average_score <= 70 %}
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
+                                        {{ score.average_score }}
+                                    </div>
+                                {% elif score.average_score > 70 and score.average_score <= 100 %}
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
+                                        {{ score.average_score }}
+                                    </div>
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-bold shadow-md">
+                                        {{ score.average_score }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-sm text-gray-700">
+                            {% if score.comments %}
+                                <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                                    {{ score.comments }}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-400 italic">ไม่มีความคิดเห็น</p>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6 text-sm text-gray-700">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-tie text-blue-600 mr-2"></i>
+                                {{ score.teachers }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
+                                <p>ยังไม่มีคะแนนในขณะนี้</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+</div>
+{% endblock %}

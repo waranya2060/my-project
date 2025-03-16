@@ -1,0 +1,70 @@
+{% extends 'base3.html' %}
+{% block title %}เพิ่มข่าวสาร{% endblock %}
+{% block content %}
+<div class="container mx-auto mt-8">
+    <h1 class="news-title">
+        แจ้งข่าวสาร 
+        <img src="https://img.icons8.com/fluency/48/2A9D8F/appointment-reminders.png" alt="announcement icon" class="news-icon">
+    </h1>
+    <form method="POST" id="newsForm" onsubmit="return submitForm(event)">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label for="title">หัวข้อ:</label>
+            {{ form.topic }}
+        </div>
+        <div class="mb-4">
+            <label for="description">รายละเอียด:</label>
+            {{ form.detail }}
+        </div>
+        <div class="mb-4">
+            <label for="link">ลิงก์:</label>
+            {{ form.url }}
+        </div>
+        <button type="submit" id="submitBtn" class="bg-blue-500 text-white py-2 px-4 rounded-md">
+            <span class="btn-text">บันทึก</span>
+            <div class="loader hidden"></div>
+        </button>
+    </form>
+    
+    <!-- ข้อความแจ้งเตือนสำเร็จ -->
+    <div id="successMessage" class="success-message hidden">
+        ✅ ข่าวสารถูกบันทึกเรียบร้อยแล้ว!
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    function submitForm(event) {
+        event.preventDefault();
+        const form = document.getElementById('newsForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const successMessage = document.getElementById('successMessage');
+
+        // แสดง loading
+        submitBtn.querySelector('.btn-text').classList.add('hidden');
+        submitBtn.querySelector('.loader').classList.remove('hidden');
+
+        // ส่งฟอร์มด้วย AJAX หรือ submit ปกติ
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // แสดงข้อความสำเร็จ
+                successMessage.classList.remove('hidden');
+                form.reset();
+            }
+        })
+        .finally(() => {
+            // ซ่อน loading
+            submitBtn.querySelector('.btn-text').classList.remove('hidden');
+            submitBtn.querySelector('.loader').classList.add('hidden');
+        });
+    }
+</script>
+{% endblock %}

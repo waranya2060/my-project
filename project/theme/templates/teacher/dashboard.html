@@ -1,0 +1,126 @@
+{% extends 'base2.html' %}
+{% block title %}หน้าแรก{% endblock %}
+{% block content %}
+<div class="container mx-auto mt-8 px-4">
+    <h2 class="text-2xl font-bold text-[#030303] mb-6">ปฏิทินกิจกรรม</h2>
+    
+    <!-- ส่วนควบคุมและกรองข้อมูล -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex flex-wrap items-center justify-between">
+        <div class="flex items-center space-x-4 mb-3 md:mb-0">
+            <div>
+                <button id="today-button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-calendar-day mr-2"></i> วันนี้
+                </button>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <button id="month-view" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-calendar-alt mr-1"></i> เดือน
+            </button>
+            <button id="week-view" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-calendar-week mr-1"></i> สัปดาห์
+            </button>
+            <button id="day-view" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-calendar-day mr-1"></i> วัน
+            </button>
+        </div>
+    </div>
+
+    <!-- ปฏิทิน -->
+    <div class="mt-4 bg-white rounded-lg shadow-lg p-6">
+        <div id="calendar" class="w-full h-[600px] rounded-lg overflow-hidden"></div>
+    </div>
+    
+    <!-- ส่วนคำอธิบายสี -->
+    <div class="mt-6 bg-white rounded-lg shadow-md p-4">
+        <h3 class="text-lg font-medium text-gray-800 mb-3">สัญลักษณ์และความหมาย</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex items-center">
+                <div class="w-4 h-4 rounded mr-2" style="background-color: #8FCFEB;"></div>
+                <span class="text-sm text-gray-600">การนัดหมายโครงงาน</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 rounded mr-2 bg-green-500"></div>
+                <span class="text-sm text-gray-600">การนัดหมายที่ยืนยันแล้ว</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal สำหรับแสดงรายละเอียดการนัดหมาย -->
+<div id="appointmentModal" class="fixed inset-0 z-30 hidden overflow-y-auto">
+    <!-- ส่วน Modal (เหมือนเดิม) -->
+</div>
+
+<!-- JavaScript สำหรับปฏิทิน -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'th',
+            height: 'auto',
+            headerToolbar: {
+                left: 'prev,next',
+                center: 'title',
+                right: ''
+            },
+            buttonText: {
+                today: 'วันนี้',
+                month: 'เดือน',
+                week: 'สัปดาห์',
+                day: 'วัน'
+            },
+            titleFormat: { 
+                year: 'numeric', 
+                month: 'long'
+            },
+            events: [
+    {% for appointment in appointments %}
+    {
+        id: '{{ appointment.id }}',
+        title: '{{ appointment.project.topic }}',
+        start: '{{ appointment.date|date:"Y-m-d" }}T{{ appointment.time_start|time:"H:i:s" }}',
+        end: '{{ appointment.date|date:"Y-m-d" }}T{{ appointment.time_finish|time:"H:i:s" }}',
+        extendedProps: {
+            location: '{{ appointment.location|default:"ไม่ระบุ" }}',
+            advisor: '{{ appointment.project.advisor.get_full_name }}',
+            committee: [{% for teacher in appointment.project.committee.all %} '{{ teacher.get_full_name }}' {% if not forloop.last %}, {% endif %} {% endfor %}],
+            students: [{% for student in appointment.project.students.all %} '{{ student.get_full_name }}' {% if not forloop.last %}, {% endif %} {% endfor %}]
+        },
+        color: '#10B981',  
+        textColor: '#19335A',
+        borderColor: '#19335A',
+    },
+    {% endfor %}
+],
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                const event = info.event;
+                
+                // แสดง Modal
+                document.getElementById('modal-title').textContent = event.title;
+                document.getElementById('modal-time').textContent = `${event.start.toLocaleString('th-TH', { dateStyle: 'full' })} ${event.start.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} - ${event.end.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
+                document.getElementById('modal-location').textContent = event.extendedProps.location;
+                document.getElementById('modal-advisor').textContent = event.extendedProps.advisor;
+                document.getElementById('modal-committee').textContent = event.extendedProps.committee.join(', ');
+                document.getElementById('modal-students').textContent = event.extendedProps.students.join(', ');
+                
+                // ตั้งค่าลิงก์ประชุม (ถ้ามี)
+                const meetingLink = document.getElementById('meetingLink');
+                if (event.extendedProps.meetingLink && event.extendedProps.meetingLink !== '#') {
+                    meetingLink.href = event.extendedProps.meetingLink;
+                    meetingLink.classList.remove('hidden');
+                } else {
+                    meetingLink.classList.add('hidden');
+                }
+                
+                modal.classList.remove('hidden');
+            }
+        });
+        
+        calendar.render();
+    });
+</script>
+{% endblock %}

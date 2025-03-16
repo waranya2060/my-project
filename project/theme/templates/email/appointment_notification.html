@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>การนัดหมายใหม่</title>
+</head>
+<body>
+    <h2>การนัดหมายใหม่</h2>
+    <p><strong>วันที่:</strong> {{ appointment.date }}</p>
+    <p><strong>เวลา:</strong> {{ appointment.time_start }} - {{ appointment.time_finish }}</p>
+    <p><strong>สถานที่:</strong> {{ appointment.location }}</p>
+    <p><strong>นักศึกษา:</strong>
+        {% for student in appointment.students.all %}
+        {{ student.get_full_name }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </p>
+    <p>กรุณายืนยันการนัดหมายในระบบ</p>
+</body>
+</html>

@@ -1,0 +1,25 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เลือกบทบาทการเข้าสู่ระบบ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center h-screen bg-gradient-to-r from-blue-500 to-indigo-600">
+    <div class="bg-white p-8 rounded-lg shadow-xl text-center w-96">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6"> เลือกบทบาทการเข้าสู่ระบบ</h1>
+
+        <!-- ปุ่มเข้าสู่ระบบอาจารย์ -->
+        <a href="{% url 'teacher_dashboard' %}" class="block bg-blue-500 text-white text-lg font-semibold py-3 rounded-lg shadow-md hover:bg-blue-600 transition-all duration-300 mb-4">
+             เข้าสู่ระบบอาจารย์
+        </a>
+
+        <!-- ปุ่มเข้าสู่ระบบผู้จัดการรายวิชา -->
+        <a href="{% url 'manager_dashboard' %}" class="block bg-green-500 text-white text-lg font-semibold py-3 rounded-lg shadow-md hover:bg-green-600 transition-all duration-300">
+             เข้าสู่ระบบอาจารย์ประจำวิชา
+        </a>
+    </div>
+</body>
+</html>

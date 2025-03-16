@@ -1,0 +1,130 @@
+{% extends 'base2.html' %}
+{% block title %}ให้คะแนนโครงงาน{% endblock %}
+{% block content %}
+<div class="container mx-auto mt-8 px-4 max-w-4xl">
+    <h2 class="text-2xl font-bold text-center mb-6 text-gray-800 border-b pb-3">ให้คะแนนโครงงาน</h2>
+
+    <!-- แสดงรายการโปรเจคทั้งหมด -->
+    <div class="mt-4 space-y-6">
+        {% for project in projects %}
+        <div class="p-5 bg-white shadow-lg rounded-lg border border-gray-100 transition-all duration-300 hover:shadow-xl">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-start">
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2 border-l-4 border-blue-500 pl-2">{{ project.topic }}</h3>
+                    <div class="space-y-2 text-gray-700">
+                        <p class="flex items-center">
+                            <span class="inline-block w-20 font-medium">ปี:</span>
+                            <span class="bg-blue-50 px-2 py-1 rounded-md text-sm text-black">{{ project.year }}</span>
+                        </p>
+                        <p class="flex items-center">
+                            <span class="inline-block w-20 font-medium">ที่ปรึกษา:</span>
+                            <span class="bg-purple-50 px-2 py-1 rounded-md text-sm text-black">{{ project.advisor.get_full_name }}</span>
+                        </p>
+                        <p class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <span class="inline-block w-20 font-medium">นักศึกษา:</span>
+                            <span class="flex flex-wrap gap-2">
+                                {% for student in project.students.all %}
+                                <span class="bg-green-50 px-2 py-1 rounded-md text-sm text-black">
+                                    <i class="fas fa-user mr-1"></i> {{ student.student_id }} - {{ student.get_full_name }}
+                                </span>
+                                {% endfor %}
+                            </span>
+                        </p>
+
+                        <!-- แสดงกรรมการ -->
+                        {% if project.committee %}
+                        <p class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <span class="inline-block w-20 font-medium">กรรมการ:</span>
+                            <span class="flex flex-wrap gap-2">
+                                {% for member in project.committee.all %}
+                                <span class="bg-amber-50 px-2 py-1 rounded-md text-sm text-black">
+                                    <i class="fas fa-user-tie mr-1"></i> {{ member.get_full_name }}
+                                </span>
+                                {% endfor %}
+                            </span>
+                        </p>
+                        {% endif %}
+
+                        <!-- แสดงไฟล์ที่อัปโหลด -->
+                        {% if project.files.all %}
+                        <div class="mt-3">
+                            <p class="font-medium mb-1">ไฟล์/ลิงก์:</p>
+                            <ul class="space-y-1 pl-2">
+                                {% for file in project.files.all %}
+                                    {% if file.file %}
+                                        <li class="hover:translate-x-1 transition-transform duration-200">
+                                            <a href="{{ file.file.url }}" target="_blank" class="flex items-center text-blue-600 hover:text-blue-800 group">
+                                                <span class="bg-blue-100 p-1.5 rounded-md mr-2 group-hover:bg-blue-200 transition duration-300">
+                                                    <i class="fas fa-file text-sm"></i>
+                                                </span>
+                                                <span class="underline underline-offset-2 text-sm">{{ file.file.name }}</span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% if file.url %}
+                                        <li class="hover:translate-x-1 transition-transform duration-200">
+                                            <a href="{{ file.url }}" target="_blank" class="flex items-center text-blue-600 hover:text-blue-800 group">
+                                                <span class="bg-blue-100 p-1.5 rounded-md mr-2 group-hover:bg-blue-200 transition duration-300">
+                                                    <i class="fas fa-link text-sm"></i>
+                                                </span>
+                                                <span class="underline underline-offset-2 text-sm">{{ file.url }}</span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ปุ่มให้คะแนน -->
+            <button type="button" class="mt-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-4 rounded-md hover:from-blue-600 hover:to-blue-700 transition duration-300 shadow-sm hover:shadow-md flex items-center text-sm" onclick="toggleScoreForm({{ project.id }})">
+                <i class="fas fa-star mr-2"></i> ให้คะแนน
+            </button>
+
+            <!-- ฟอร์มให้คะแนน -->
+            <form id="score-form-{{ project.id }}" method="POST" action="{% url 'assign_score' %}" class="mt-4 hidden bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner">
+                {% csrf_token %}
+                <input type="hidden" name="project_id" value="{{ project.id }}">
+                <div class="mb-4">
+                    <label for="score" class="block text-gray-700 font-medium mb-1 flex items-center text-sm">
+                        <i class="fas fa-chart-bar text-blue-500 mr-2"></i> คะแนน:
+                    </label>
+                    <input type="number" name="score" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm" min="0" max="100" required>
+                </div>
+                <div class="mb-4">
+                    <label for="comment" class="block text-gray-700 font-medium mb-1 flex items-center text-sm">
+                        <i class="fas fa-comment-alt text-blue-500 mr-2"></i> คำติชม:
+                    </label>
+                    <textarea name="comment" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm" rows="3" required></textarea>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" class="bg-gray-300 text-gray-700 py-1.5 px-3 rounded-md hover:bg-gray-400 transition duration-300 text-sm" onclick="toggleScoreForm({{ project.id }})">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="bg-gradient-to-r from-green-500 to-green-600 text-white py-1.5 px-3 rounded-md hover:from-green-600 hover:to-green-700 transition duration-300 shadow-sm hover:shadow-md flex items-center text-sm">
+                        <i class="fas fa-save mr-2"></i> บันทึกคะแนน
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% empty %}
+        <div class="text-center p-8 bg-gray-50 rounded-lg border border-gray-200">
+            <i class="fas fa-folder-open text-gray-400 text-4xl mb-3"></i>
+            <p class="text-lg text-gray-600">คุณยังไม่มีโปรเจคที่ต้องให้คะแนน</p>
+            <p class="text-gray-500 mt-1 text-sm">โปรเจคใหม่จะแสดงที่นี่เมื่อได้รับการกำหนด</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // ฟังก์ชันที่ใช้ในการแสดงหรือซ่อนฟอร์มให้คะแนน
+    function toggleScoreForm(projectId) {
+        const form = document.getElementById('score-form-' + projectId);
+        form.classList.toggle('hidden');
+    }
+</script>
+{% endblock %}

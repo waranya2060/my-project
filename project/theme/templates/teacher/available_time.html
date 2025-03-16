@@ -1,0 +1,268 @@
+{% extends 'base2.html' %}
+{% block title %}ลงเวลาว่าง{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-2xl">
+    <div class="relative mb-6 text-center">
+        <h2 class="text-3xl font-bold text-[#19335A] inline-block relative">
+            <span class="relative z-10">ลงเวลาว่าง</span>
+            <span class="absolute -bottom-2 left-0 w-full h-3  opacity-70 rounded-lg"></span>
+        </h2>
+    </div>
+    
+    <!-- ตารางเวลา -->
+    <div class="bg-white rounded-lg p-4 mb-6">
+        <div class="flex items-center mb-3">
+            <div class="w-2 h-8 bg-blue-500 rounded-full mr-3"></div>
+            <h3 class="text-xl font-bold text-gray-700">เลือกวันและเวลา</h3>
+        </div>
+        
+        <div class="space-y-5">
+            <div>
+                <label for="date" class="block text-gray-700 text-lg font-medium mb-1">วันที่:</label>
+                <input 
+                    type="date" 
+                    id="date" 
+                    class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#8FCFEB] focus:border-[#8FCFEB] transition-all"
+                >
+            </div>
+            
+            <div>
+                <p class="block text-gray-700 text-lg font-medium mb-2">เลือกช่วงเวลา:</p>
+                <div class="grid grid-cols-4 gap-2" id="time-grid">
+                    <!-- เวลา 8:00 - 17:00 -->
+                    {% for hour in hours %}
+                    <div class="border border-gray-200 rounded-md text-center cursor-pointer hover:bg-[#8FCFEB] hover:text-white transition-all">
+                        <div class="py-2">
+                            <span class="block text-lg">{{ hour }}:00</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            
+            </div>
+            
+            <button id="save-time" class="w-full bg-[#2563EB] text-white py-2 px-4 rounded-md hover:bg-[#1E4BB5] transition-all font-medium">
+                บันทึกเวลา
+            </button>
+        </div>
+    </div>
+
+    <!-- รายการเวลาว่าง -->
+    <div class="bg-white rounded-lg p-4">
+        <div class="flex items-center mb-3">
+            <div class="w-2 h-8 bg-blue-500 rounded-full mr-3"></div>
+            <h3 class="text-xl font-bold text-gray-700">รายการเวลาว่าง</h3>
+        </div>
+        
+        <div class="space-y-3">
+            {% for time in available_times %}
+            <div class="border border-gray-100 rounded-md p-3 hover:shadow-sm transition-all time-slot" data-id="{{ time.id }}">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-gray-700 mb-1">
+                            <span class="font-medium">วันที่:</span> 
+                            <span class="date">{{ time.date }}</span>
+                        </p>
+                        <p class="text-gray-700">
+                            <span class="font-medium">เวลา:</span> 
+                            <span class="start-time">{{ time.start_time }}</span> - <span class="end-time">{{ time.end_time }}</span>
+                        </p>
+                    </div>
+                    
+                    <div>
+                        {% if time.can_edit %}
+                        <button class="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-all delete-time">
+                            ลบ
+                        </button>
+                        {% else %}
+                        <span class="text-red-500 text-sm inline-block px-2 py-1 bg-red-50 rounded-md">
+                            หมดเวลาลบ
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center p-4 border border-dashed border-gray-200 rounded-md">
+                <p class="text-gray-500">ยังไม่มีเวลาว่าง</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript remains unchanged -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const timeGrid = document.getElementById('time-grid');
+        const saveButton = document.getElementById('save-time');
+        const deleteButtons = document.querySelectorAll('.delete-time');
+        let selectedStartTime = null;
+        let selectedEndTime = null;
+    
+        // ฟังก์ชันแปลงวันที่เป็นภาษาไทย
+        function formatThaiDate(dateString) {
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('th-TH', options);
+        }
+    
+        // ฟังก์ชันแปลงวันที่และเวลาเป็นภาษาไทย
+        function formatThaiDateTime(dateString, timeString) {
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const thaiDate = date.toLocaleDateString('th-TH', options);
+    
+            const time = new Date(`1970-01-01T${timeString}:00`);
+            const thaiTime = time.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: true });
+    
+            return { thaiDate, thaiTime };
+        }
+    
+        // แปลงวันที่ในส่วนของ "รายการเวลาว่าง"
+        const dateElements = document.querySelectorAll('.date');
+        dateElements.forEach(function(dateElement) {
+            const date = dateElement.textContent;
+            const thaiDate = formatThaiDate(date);
+            dateElement.textContent = thaiDate;
+        });
+    
+        // ฟังก์ชันตรวจสอบและลบเวลาที่หมดอายุ
+        function checkAndDeleteExpiredTimes() {
+            const timeSlots = document.querySelectorAll('.time-slot');
+            const now = new Date();  // เวลาปัจจุบัน
+    
+            timeSlots.forEach(function(slot) {
+                const date = slot.querySelector('.date').textContent;
+                const endTime = slot.querySelector('.end-time').textContent;
+                const timeId = slot.dataset.id;
+    
+                // สร้างวันที่และเวลาจากข้อมูลใน DOM
+                const endDateTime = new Date(`${date}T${endTime}:00`);
+    
+                // ตรวจสอบว่าเวลาปัจจุบันเกินเวลาสิ้นสุดหรือไม่
+                if (now > endDateTime) {
+                    // แปลงวันที่และเวลาเป็นภาษาไทย
+                    const { thaiDate, thaiTime: thaiEndTime } = formatThaiDateTime(date, endTime);
+    
+                    // ส่งคำขอลบข้อมูล
+                    fetch('{% url "delete_available_time" %}', {
+                        method: 'POST',
+                        body: JSON.stringify({ id: timeId }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log(`ลบเวลาที่หมดอายุแล้ว: ${thaiDate} ${thaiEndTime}`);
+                            slot.remove();  // ลบออกจาก DOM
+                        } else {
+                            console.error('เกิดข้อผิดพลาดในการลบเวลาที่หมดอายุ');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+        }
+    
+        // เรียกฟังก์ชันตรวจสอบและลบเวลาที่หมดอายุทุก 1 นาที
+        setInterval(checkAndDeleteExpiredTimes, 60000);  // 60000 มิลลิวินาที = 1 นาที
+    
+        timeGrid.addEventListener('click', function(event) {
+            const cell = event.target.closest('div.cursor-pointer');
+            if (cell) {
+                const time = cell.querySelector('span').textContent;
+        
+                if (!selectedStartTime) {
+                    selectedStartTime = time;
+                    cell.classList.add('bg-[#8FCFEB]', 'text-white');
+                } else if (!selectedEndTime && time !== selectedStartTime) {
+                    selectedEndTime = time;
+                    cell.classList.add('bg-[#8FCFEB]', 'text-white');
+                } else if (time === selectedStartTime || time === selectedEndTime) {
+                    if (time === selectedStartTime) selectedStartTime = null;
+                    if (time === selectedEndTime) selectedEndTime = null;
+                    cell.classList.remove('bg-[#8FCFEB]', 'text-white');
+                }
+            }
+        });
+        
+        // บันทึกเวลา
+        saveButton.addEventListener('click', function() {
+            const date = document.getElementById('date').value;
+            if (!date || !selectedStartTime || !selectedEndTime) {
+                alert('กรุณาเลือกวันที่และเวลาให้ครบถ้วน');
+                return;
+            }
+    
+            // แปลงวันที่และเวลาเป็นภาษาไทย
+            const thaiDate = formatThaiDate(date);
+            const { thaiTime } = formatThaiDateTime(date, selectedStartTime);
+            const { thaiTime: thaiEndTime } = formatThaiDateTime(date, selectedEndTime);
+    
+            const formData = new FormData();
+            formData.append('date', date);
+            formData.append('start_time', selectedStartTime);
+            formData.append('end_time', selectedEndTime);
+    
+            fetch('{% url "save_available_time" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`บันทึกเวลาสำเร็จ: ${thaiDate} ${thaiTime} - ${thaiEndTime}`);
+                    window.location.reload();
+                } else {
+                    alert('เกิดข้อผิดพลาดในการบันทึก');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาด');
+            });
+        });
+    
+        // ฟังก์ชันสำหรับลบเวลา
+        deleteButtons.forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                const timeSlot = event.target.closest('.time-slot');
+                const timeId = timeSlot.dataset.id;
+    
+                if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบเวลานี้?')) {
+                    fetch('{% url "delete_available_time" %}', {
+                        method: 'POST',
+                        body: JSON.stringify({ id: timeId }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('ลบเวลาสำเร็จ');
+                            window.location.reload();
+                        } else {
+                            alert('เกิดข้อผิดพลาดในการลบ');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('เกิดข้อผิดพลาด');
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

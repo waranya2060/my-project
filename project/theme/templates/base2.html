@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <title>{% block title %}ระบบนัดหมายสอบโครงงาน{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        
+        .nav-item {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background-color: #8FCFEB;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-item:hover::after {
+            width: 80%;
+        }
+        
+        .dropdown-menu {
+            transform: translateY(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .dropdown-menu.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-[#19335A] to-[#2A4A7F] text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <h1 class="text-xl font-bold">ระบบนัดหมายสอบโครงงาน</h1>
+            </div>
+            
+            <nav class="flex items-center space-x-6">
+                <a href="{% url 'teacher_dashboard' %}" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md transition-all">
+                    หน้าแรก
+                </a>
+                
+                <!-- Dropdown for Time Management -->
+                {% if request.user.role == 2 or request.user.role == 3 %}
+                <div class="relative">
+                    <button id="time-management-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center transition-all">
+                        การจัดการเวลา
+                        <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="time-management" class="dropdown-menu absolute z-10 left-0 mt-2 w-56 bg-white rounded-lg shadow-lg hidden">
+                        
+                        <div class="py-1">
+                            <a href="{% url 'available_time' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
+                                ลงเวลาว่าง
+                            </a>
+                            <a href="{% url 'teacher_check_time' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
+                                ตรวจสอบเวลาว่าง
+                            </a>
+                            <a href="{% url 'teacher_appointments' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
+                                การนัด
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Dropdown for Appointments and Scoring -->
+                {% if request.user.role == 2 or request.user.role == 3 %}
+                <div class="relative">
+                    <button id="appointments-scoring-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center transition-all">
+                        แจ้งข่าวและให้คะแนน
+                        <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="appointments-scoring" class="dropdown-menu absolute z-10 left-0 mt-2 w-56 bg-white rounded-lg shadow-lg hidden">
+                      
+                        <div class="py-1">
+                            <a href="{% url 'assign_score' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
+                                ให้คะแนนโครงงาน
+                            </a>
+                            <a href="{% url 'teacher_news' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
+                                แจ้งข่าวสาร
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- แดชบอร์ดผู้จัดการ (เฉพาะ role 3) -->
+                {% if request.user.role == 3 %}
+                <a href="{% url 'manager_dashboard' %}" class="nav-item bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-all shadow-sm">
+                    แดชบอร์ดผู้จัดการ
+                </a>
+                {% endif %}
+                
+                <!-- ปุ่มออกจากระบบ -->
+                <a href="{% url 'logout' %}" class="nav-item border border-[#8FCFEB] hover:bg-[#8FCFEB] hover:text-[#19335A] px-4 py-2 rounded-md flex items-center transition-all">
+                    <i class="fas fa-sign-out-alt text-sm mr-2"></i>
+                    ออกจากระบบ
+                </a>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container mx-auto py-6 px-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#19335A] text-white py-4 mt-auto">
+        <div class="container mx-auto px-4 text-center text-sm">
+            <p>© {% now "Y" %} ระบบนัดหมายสอบโครงงาน</p>
+        </div>
+    </footer>
+
+    <!-- Scripts to Handle Dropdown -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeManagementButton = document.getElementById('time-management-button');
+            const timeManagementMenu = document.getElementById('time-management');
+    
+            const appointmentsScoringButton = document.getElementById('appointments-scoring-button');
+            const appointmentsScoringMenu = document.getElementById('appointments-scoring');
+    
+            // Function to close all dropdown menus
+            function closeAllMenus() {
+                if (timeManagementMenu) {
+                    timeManagementMenu.classList.add('hidden');
+                    timeManagementMenu.classList.remove('show');
+                }
+                if (appointmentsScoringMenu) {
+                    appointmentsScoringMenu.classList.add('hidden');
+                    appointmentsScoringMenu.classList.remove('show');
+                }
+            }
+    
+            // Toggle the Time Management Menu
+            if (timeManagementButton && timeManagementMenu) {
+                timeManagementButton.addEventListener('click', function(event) {
+                    const isHidden = timeManagementMenu.classList.contains('hidden');
+                    closeAllMenus();
+                    
+                    if (isHidden) {
+                        timeManagementMenu.classList.remove('hidden');
+                        setTimeout(() => {
+                            timeManagementMenu.classList.add('show');
+                        }, 10);
+                    }
+                    event.stopPropagation();
+                });
+            }
+    
+            // Toggle the Appointments and Scoring Menu
+            if (appointmentsScoringButton && appointmentsScoringMenu) {
+                appointmentsScoringButton.addEventListener('click', function(event) {
+                    const isHidden = appointmentsScoringMenu.classList.contains('hidden');
+                    closeAllMenus();
+                    
+                    if (isHidden) {
+                        appointmentsScoringMenu.classList.remove('hidden');
+                        setTimeout(() => {
+                            appointmentsScoringMenu.classList.add('show');
+                        }, 10);
+                    }
+                    event.stopPropagation();
+                });
+            }
+    
+            // Close the dropdowns when clicking outside of them
+            document.addEventListener('click', function(event) {
+                closeAllMenus();
+            });
+            
+            // Prevent closing when clicking inside the dropdown
+            const dropdowns = document.querySelectorAll('.dropdown-menu');
+            dropdowns.forEach(dropdown => {
+                dropdown.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

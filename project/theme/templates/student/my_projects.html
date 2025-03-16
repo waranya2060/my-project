@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6">
+    <!-- Title -->
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">โครงงานของฉัน</h2>
+
+    <!-- Project List -->
+    {% if projects %}
+        <div class="space-y-6">
+            {% for project in projects %}
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <!-- Project Topic -->
+                    <h3 class="text-2xl font-semibold text-black mb-3">
+                        {{ project.topic }}
+                    </h3>
+
+                    <!-- Project Year -->
+                    <p class="text-gray-700 mb-3">
+                        <i class="fas fa-calendar-alt mr-2"></i> <strong>ปี:</strong> {{ project.year }}
+                    </p>
+
+                    <!-- Advisor -->
+                    <p class="text-gray-700 mb-3">
+                        <i class="fas fa-user-tie mr-2"></i> <strong>อาจารย์ที่ปรึกษา:</strong> 
+                        {{ project.advisor.first_name }} {{ project.advisor.last_name }}
+                    </p>
+
+                    <!-- Committee Members -->
+                    <p class="text-gray-700 mb-4">
+                        <i class="fas fa-users mr-2"></i> <strong>กรรมการ:</strong>
+                        {% for committee_member in project.committee.all %}
+                            {{ committee_member.first_name }} {{ committee_member.last_name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            ไม่มีกรรมการ
+                        {% endfor %}
+                    </p>
+
+                    <!-- Uploaded Files -->
+                    <div class="mb-4">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-file-upload mr-2"></i> ไฟล์
+                        </h4>
+                        {% if project.files.all %}
+                            <ul class="list-disc list-inside">
+                                {% for file in project.files.all %}
+                                    <!-- แสดงไฟล์ที่อัปโหลด -->
+                                    {% if file.file %}
+                                        <li class="text-gray-700 mb-2">
+                                            <a href="{{ file.file.url }}" class="text-blue-500 hover:text-blue-600 hover:underline transition duration-200" target="_blank">
+                                                <i class="fas fa-file mr-2"></i> {{ file.file.name }}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                    <!-- แสดงลิงก์ -->
+                                    {% if file.url %}
+                                        <li class="text-gray-700 mb-2">
+                                            <a href="{{ file.url }}" class="text-blue-500 hover:text-blue-600 hover:underline transition duration-200" target="_blank">
+                                                <i class="fas fa-link mr-2"></i> {{ file.url }}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-gray-500">ไม่มีไฟล์ที่อัปโหลด</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-4">
+                        <!-- Edit Button -->
+                        <a href="{% url 'edit_project' project.id %}" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300 flex items-center">
+                            <i class="fas fa-edit mr-2"></i> แก้ไขโครงงาน
+                        </a>
+
+                        <!-- Delete Button -->
+                        <form action="{% url 'delete_project' project.id %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300 flex items-center" onclick="return confirm('คุณแน่ใจหรือไม่ที่ต้องการลบโครงงานนี้?')">
+                                <i class="fas fa-trash-alt mr-2"></i> ลบโครงงาน
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- No Projects Message -->
+        <div class="text-center py-8">
+            <i class="fas fa-folder-open text-4xl text-gray-400 mb-4"></i>
+            <p class="text-gray-700 text-xl">ยังไม่มีโครงงานของคุณในระบบ</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

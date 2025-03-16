@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{% block title %}ระบบนัดหมายสอบโครงงาน{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <header class="bg-[#19335A] shadow-md">
+        <nav class="mx-auto flex items-center justify-between p-6 lg:px-8" aria-label="Global">
+            <div class="flex lg:flex-1">
+                <a href="#" class="-m-1.5 p-1.5">
+                    <span class="sr-only">ระบบนัดหมายสอบโครงงาน</span>
+                    <h1 class="text-white text-xl font-semibold">ระบบนัดหมายสอบโครงงาน</h1>
+                </a>
+            </div>
+     <!-- เมนูหลักที่อยู่ด้านขวา -->
+     <div class="flex space-x-8 items-center">
+        <a href="{% url 'student_dashboard' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">หน้าแรก</a>
+        <a href="{% url 'my_appointments' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">การนัด</a>
+        <a href="{% url 'student_check_time' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">ตรวจสอบเวลาว่าง</a>
+        <a href="{% url 'my_point' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">คะแนนของฉัน</a>
+       
+        <!-- Dropdown for Upload Project -->
+        <div class="relative">
+            <button id="upload-project-menu-button" class="flex items-center text-white text-sm font-medium hover:text-[#8FCFEB] focus:outline-none">
+                โครงงาน
+                <i class="fas fa-caret-down ml-1"></i>
+            </button>
+            <div id="upload-project-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                <a href="{% url 'upload_project' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">อัพโหลดโครงงาน</a>
+                <a href="{% url 'my_projects' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">โครงงานของฉัน</a>
+            </div>
+        </div>
+
+        <!-- User dropdown menu ไม่มีไอคอน -->
+        <div class="relative">
+            <button id="user-menu-button" class="flex items-center text-white text-sm font-medium hover:text-[#8FCFEB] focus:outline-none">
+                <span>{{ request.user.first_name }} {{ request.user.last_name }}</span>
+                <i class="fas fa-caret-down ml-1"></i>
+            </button>
+            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">แก้ไขข้อมูลส่วนตัว</a>
+                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">ออกจากระบบ</a>
+            </div>
+        </div>
+        </nav>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container mx-auto py-6">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Script for Dropdown Menus -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const uploadProjectButton = document.getElementById('upload-project-menu-button');
+            const uploadProjectMenu = document.getElementById('upload-project-menu');
+
+            function closeAllMenus() {
+                userMenu.classList.add('hidden');
+                uploadProjectMenu.classList.add('hidden');
+            }
+
+            userMenuButton.addEventListener('click', function(event) {
+                closeAllMenus();
+                userMenu.classList.toggle('hidden');
+                event.stopPropagation();
+            });
+
+            uploadProjectButton.addEventListener('click', function(event) {
+                closeAllMenus();
+                uploadProjectMenu.classList.toggle('hidden');
+                event.stopPropagation();
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!userMenuButton.contains(event.target) && !uploadProjectButton.contains(event.target)) {
+                    closeAllMenus();
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

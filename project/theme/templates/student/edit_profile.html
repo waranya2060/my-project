@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}แก้ไขโปรไฟล์{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 flex justify-center">
+    <div class="w-full max-w-md"> <!-- กำหนดความกว้างสูงสุดของฟอร์ม -->
+        <!-- หัวข้อแก้ไขโปรไฟล์ -->
+        <h2 class="text-2xl font-bold text-black mb-6 flex justify-center items-center">
+          
+            แก้ไขโปรไฟล์
+        </h2>
+
+        <form method="post" class="bg-white p-6 rounded-lg shadow-md">
+            {% csrf_token %}
+            
+            <!-- ชื่อจริง -->
+            <div class="mb-6">
+                <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <i class="fas fa-user text-black mr-2"></i> <!-- ไอคอนชื่อจริง -->
+                    ชื่อจริง
+                </label>
+                <input type="text" name="first_name" value="{{ form.first_name.value }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+            </div>
+
+            <!-- นามสกุล -->
+            <div class="mb-6">
+                <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <i class="fas fa-user-tag text-black mr-2"></i> <!-- ไอคอนนามสกุล -->
+                    นามสกุล
+                </label>
+                <input type="text" name="last_name" value="{{ form.last_name.value }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+            </div>
+
+            <!-- รหัสนักศึกษา -->
+            <div class="mb-6">
+                <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <i class="fas fa-id-card text-black mr-2"></i> <!-- ไอคอนรหัสนักศึกษา -->
+                    รหัสนักศึกษา
+                </label>
+                <input type="text" name="student_id" value="{{ form.student_id.value }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+            </div>
+
+            <!-- ปุ่มบันทึก -->
+            <button type="submit" class="w-full bg-blue-500 text-black px-4 py-2 rounded-md hover:bg-[#3265b1] transition-colors flex items-center justify-center">
+                <i class="fas fa-save mr-2"></i> <!-- ไอคอนบันทึก -->
+                บันทึก
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

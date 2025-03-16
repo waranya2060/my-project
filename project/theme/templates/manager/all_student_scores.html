@@ -1,0 +1,107 @@
+{% extends 'base3.html' %}
+
+{% block title %}คะแนนโครงงานนักศึกษาทั้งหมด{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-4">คะแนนโครงงานนักศึกษาทั้งหมด</h1>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center">
+                <i class="fas fa-search text-gray-500 mr-2"></i>
+                <h2 class="text-lg font-semibold text-gray-700">ค้นหาและกรองข้อมูล</h2>
+            </div>
+        </div>
+        <div class="p-6">
+            <form method="GET" class="mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="year" class="block text-sm font-medium text-gray-700">ปีการศึกษา</label>
+                        <select id="year" name="year" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">ทั้งหมด</option>
+                            {% for year in years %}
+                                <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="search" class="block text-sm font-medium text-gray-700">ค้นหา (ชื่อนักศึกษา, รหัสนักศึกษา, ชื่อโครงงาน)</label>
+                        <input type="text" id="search" name="search" value="{{ search_query }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm">
+                        <i class="fas fa-search mr-2"></i> ค้นหา
+                    </button>
+                </div>
+            </form>
+            
+            {% if project_scores %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสนักศึกษา</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-สกุล</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อโครงงาน</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ปีการศึกษา</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อาจารย์ที่ปรึกษา</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กรรมการ</th>
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">คะแนนเฉลี่ย</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for score in project_scores %}
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.student_id|default:"ไม่ระบุ" }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.student_name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.project_topic }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.year }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.advisor }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <ul class="list-disc list-inside">
+                                            {% for member in score.committee %}
+                                                <li>{{ member }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                            {% if score.average_score >= 80 %}bg-green-100 text-green-800
+                                            {% elif score.average_score >= 70 %}bg-blue-100 text-blue-800
+                                            {% elif score.average_score >= 60 %}bg-yellow-100 text-yellow-800
+                                            {% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ score.average_score }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Export buttons -->
+                <div class="mt-6">
+                    <a href="{% url 'export_scores_csv' %}{% if selected_year %}?year={{ selected_year }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                       class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md shadow-sm">
+                        <i class="fas fa-file-csv mr-2"></i> ดาวน์โหลด
+                    </a>
+                </div>
+            {% else %}
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">ไม่พบข้อมูลคะแนนที่ตรงกับเงื่อนไขการค้นหา</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
