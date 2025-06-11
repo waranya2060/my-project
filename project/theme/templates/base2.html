@@ -11,11 +11,13 @@
         
         body {
             font-family: 'Sarabun', sans-serif;
+            overflow-x: hidden; /* ป้องกันการเลื่อนแนวนอน */
         }
         
         .nav-item {
             position: relative;
             transition: all 0.3s ease;
+            z-index: 1; /* ให้ nav-item มี z-index น้อยกว่า dropdown-menu */
         }
         
         .nav-item::after {
@@ -39,12 +41,21 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
+            z-index: 50; /* เพิ่มค่า z-index */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* เพิ่มเงาให้ชัดเจนขึ้น */
+            position: absolute;
         }
         
         .dropdown-menu.show {
             transform: translateY(0);
             opacity: 1;
             visibility: visible;
+        }
+        
+        /* แก้ไขปัญหา dropdown-menu ถูกซ่อนหรือตัดขอบ */
+        .relative {
+            position: relative;
+            overflow: visible;
         }
     </style>
 </head>
@@ -71,8 +82,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
                     </button>
-                    <div id="time-management" class="dropdown-menu absolute z-10 left-0 mt-2 w-56 bg-white rounded-lg shadow-lg hidden">
-                        
+                    <div id="time-management" class="dropdown-menu absolute z-50 left-0 mt-2 w-56 bg-white rounded-lg shadow-xl hidden">
                         <div class="py-1">
                             <a href="{% url 'available_time' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
                                 ลงเวลาว่าง
@@ -97,8 +107,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
                     </button>
-                    <div id="appointments-scoring" class="dropdown-menu absolute z-10 left-0 mt-2 w-56 bg-white rounded-lg shadow-lg hidden">
-                      
+                    <div id="appointments-scoring" class="dropdown-menu absolute z-50 left-0 mt-2 w-56 bg-white rounded-lg shadow-xl hidden">
                         <div class="py-1">
                             <a href="{% url 'assign_score' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
                                 ให้คะแนนโครงงาน
@@ -111,18 +120,37 @@
                 </div>
                 {% endif %}
                 
-                <!-- แดชบอร์ดผู้จัดการ (เฉพาะ role 3) -->
-                {% if request.user.role == 3 %}
-                <a href="{% url 'manager_dashboard' %}" class="nav-item bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-all shadow-sm">
-                    แดชบอร์ดผู้จัดการ
-                </a>
-                {% endif %}
-                
-                <!-- ปุ่มออกจากระบบ -->
-                <a href="{% url 'logout' %}" class="nav-item border border-[#8FCFEB] hover:bg-[#8FCFEB] hover:text-[#19335A] px-4 py-2 rounded-md flex items-center transition-all">
-                    <i class="fas fa-sign-out-alt text-sm mr-2"></i>
-                    ออกจากระบบ
-                </a>
+                <!-- ดร็อปดาวน์ข้อมูลผู้ใช้ (ย้ายไปอยู่ด้านขวาสุด) -->
+                <div class="relative">
+                    <button id="user-profile-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center transition-all">
+                        <i class="fas fa-user-circle text-sm mr-2"></i>
+                        {{ request.user.get_full_name|default:request.user.email }}
+                        <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="user-profile-menu" class="dropdown-menu absolute z-50 right-0 mt-2 w-48 bg-white rounded-lg shadow-xl hidden">
+                        <div class="py-1">
+                            {% if request.user.role == 1 %}
+                            <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
+                                <i class="fas fa-user-edit text-sm mr-2"></i>
+                                ข้อมูลส่วนตัว
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md mx-1">
+                                <i class="fas fa-sign-out-alt text-sm mr-2"></i>
+                                ออกจากระบบ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                    <!-- แดชบอร์ดผู้จัดการ (เฉพาะ role 3) -->
+                    {% if request.user.role == 3 %}
+                    <a href="{% url 'manager_dashboard' %}" class="nav-item bg-gradient-to-r from-blue-500 to-blue-400 text-white px-4 py-2 rounded-md transition-all shadow-md hover:shadow-lg hover:from-blue-400 hover:to-blue-300 flex items-center space-x-1">
+                        <span>อาจารย์ประจำวิชา</span>
+                    </a>
+                    {% endif %}
+                    
             </nav>
         </div>
     </header>
@@ -133,13 +161,7 @@
         {% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-[#19335A] text-white py-4 mt-auto">
-        <div class="container mx-auto px-4 text-center text-sm">
-            <p>© {% now "Y" %} ระบบนัดหมายสอบโครงงาน</p>
-        </div>
-    </footer>
-
+    
     <!-- Scripts to Handle Dropdown -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -148,6 +170,9 @@
     
             const appointmentsScoringButton = document.getElementById('appointments-scoring-button');
             const appointmentsScoringMenu = document.getElementById('appointments-scoring');
+    
+            const userProfileButton = document.getElementById('user-profile-button');
+            const userProfileMenu = document.getElementById('user-profile-menu');
     
             // Function to close all dropdown menus
             function closeAllMenus() {
@@ -158,6 +183,10 @@
                 if (appointmentsScoringMenu) {
                     appointmentsScoringMenu.classList.add('hidden');
                     appointmentsScoringMenu.classList.remove('show');
+                }
+                if (userProfileMenu) {
+                    userProfileMenu.classList.add('hidden');
+                    userProfileMenu.classList.remove('show');
                 }
             }
     
@@ -187,6 +216,22 @@
                         appointmentsScoringMenu.classList.remove('hidden');
                         setTimeout(() => {
                             appointmentsScoringMenu.classList.add('show');
+                        }, 10);
+                    }
+                    event.stopPropagation();
+                });
+            }
+    
+            // Toggle the User Profile Menu
+            if (userProfileButton && userProfileMenu) {
+                userProfileButton.addEventListener('click', function(event) {
+                    const isHidden = userProfileMenu.classList.contains('hidden');
+                    closeAllMenus();
+                    
+                    if (isHidden) {
+                        userProfileMenu.classList.remove('hidden');
+                        setTimeout(() => {
+                            userProfileMenu.classList.add('show');
                         }, 10);
                     }
                     event.stopPropagation();

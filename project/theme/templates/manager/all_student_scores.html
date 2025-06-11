@@ -3,15 +3,44 @@
 {% block title %}คะแนนโครงงานนักศึกษาทั้งหมด{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-4">คะแนนโครงงานนักศึกษาทั้งหมด</h1>
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    .row-animate {
+        animation-duration: 0.2s;
+        animation-fill-mode: both;
+        animation-name: fadeIn;
+    }
+    
+    {% for i in "123456789"|make_list %}
+    tr:nth-child({{ i }}) {
+        animation-delay: {{ i|floatformat:1 }}0ms;
+    }
+    {% endfor %}
+</style>
+
+<div class="container mx-auto px-4 py-8 fade-in">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 md:mb-0 flex items-center">
+            <i class="fas fa-chart-bar text-blue-600 mr-2"></i>คะแนนโครงงานนักศึกษาทั้งหมด
+        </h1>
+        <p class="text-gray-500 text-sm">
+            <i class="far fa-calendar-alt mr-1"></i> ข้อมูล ณ วันที่ {% now "d/m/Y" %}
+        </p>
+    </div>
 
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center">
-                <i class="fas fa-search text-gray-500 mr-2"></i>
-                <h2 class="text-lg font-semibold text-gray-700">ค้นหาและกรองข้อมูล</h2>
-            </div>
+        <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+            <h2 class="text-lg font-semibold text-gray-700 flex items-center">
+                <i class="fas fa-filter text-blue-500 mr-2"></i>กรองข้อมูล
+            </h2>
         </div>
         <div class="p-6">
             <form method="GET" class="mb-6">
@@ -25,77 +54,79 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-span-2">
-                        <label for="search" class="block text-sm font-medium text-gray-700">ค้นหา (ชื่อนักศึกษา, รหัสนักศึกษา, ชื่อโครงงาน)</label>
-                        <input type="text" id="search" name="search" value="{{ search_query }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    </div>
                 </div>
                 <div class="mt-4">
-                    <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm">
-                        <i class="fas fa-search mr-2"></i> ค้นหา
+                    <button type="submit" class="w-full md:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-150">
+                        <i class="fas fa-filter mr-2"></i> กรอง
                     </button>
+                    {% if selected_year %}
+                    <a href="{% url 'all_student_scores' %}" class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+                        <i class="fas fa-sync-alt mr-2"></i> ล้าง
+                    </a>
+                    {% endif %}
                 </div>
             </form>
             
-            {% if project_scores %}
+            {% if project_data %}
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-gradient-to-r from-gray-100 to-gray-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสนักศึกษา</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-สกุล</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อโครงงาน</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสนักศึกษา</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อนักศึกษา</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ปีการศึกษา</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อาจารย์ที่ปรึกษา</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กรรมการ</th>
                                 <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">คะแนนเฉลี่ย</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ผู้ให้คะแนน</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {% for score in project_scores %}
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.student_id|default:"ไม่ระบุ" }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.student_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.project_topic }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.year }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.advisor }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <ul class="list-disc list-inside">
-                                            {% for member in score.committee %}
-                                                <li>{{ member }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    </td>
+                            {% for project in project_data %}
+                                {% for student in project.students %}
+                                <tr class="{% cycle 'bg-white' 'bg-gray-50' %} hover:bg-blue-50 transition-colors row-animate">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ project.topic }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ student.id }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ student.name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ project.year }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ project.advisor }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                                            {% if score.average_score >= 80 %}bg-green-100 text-green-800
-                                            {% elif score.average_score >= 70 %}bg-blue-100 text-blue-800
-                                            {% elif score.average_score >= 60 %}bg-yellow-100 text-yellow-800
-                                            {% else %}bg-red-100 text-red-800{% endif %}">
-                                            {{ score.average_score }}
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium shadow-sm
+                                            {% if student.average >= 50 %}bg-gradient-to-r from-green-100 to-green-200 text-green-800
+                                            {% elif student.average >= 25 %}bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800
+                                            {% elif student.average >= 15 %}bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800
+                                            {% else %}bg-gradient-to-r from-red-100 to-red-200 text-red-800{% endif %}">
+                                            <i class="fas fa-star mr-1 text-xs"></i>
+                                            {{ student.average }}
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ student.evaluations }}</td>
                                 </tr>
+                                {% endfor %}
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 
-                <!-- Export buttons -->
+                <!-- ปุ่มดาวน์โหลด CSV -->
                 <div class="mt-6">
-                    <a href="{% url 'export_scores_csv' %}{% if selected_year %}?year={{ selected_year }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md shadow-sm">
-                        <i class="fas fa-file-csv mr-2"></i> ดาวน์โหลด
+                    <a href="{% url 'export_scores_csv' %}?{% if selected_year %}year={{ selected_year }}{% endif %}" 
+                       class="inline-flex items-center bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-150">
+                        <i class="fas fa-file-csv mr-2"></i> ดาวน์โหลดไฟล์ CSV 
+                        <span class="ml-1 text-xs bg-white bg-opacity-20 px-2 py-0.5 rounded-full">
+                            {% if selected_year %}ปี {{ selected_year }}{% else %}ทั้งหมด{% endif %}
+                        </span>
                     </a>
                 </div>
             {% else %}
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
+                            <i class="fas fa-info-circle text-blue-400 text-lg"></i>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm text-blue-700">ไม่พบข้อมูลคะแนนที่ตรงกับเงื่อนไขการค้นหา</p>
+                            <p class="text-sm font-medium text-blue-700">ไม่พบข้อมูลคะแนน</p>
+                            <p class="text-xs text-blue-600 mt-1">กรุณาลองเปลี่ยนเงื่อนไขการค้นหา</p>
                         </div>
                     </div>
                 </div>
@@ -103,5 +134,4 @@
         </div>
     </div>
 </div>
-
 {% endblock %}

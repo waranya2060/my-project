@@ -28,6 +28,7 @@
                         <th class="py-3 px-4 text-left">นักศึกษา</th>
                         <th class="py-3 px-4 text-left">ไฟล์/ลิงก์</th>
                         <th class="py-3 px-4 text-left">รายละเอียด</th>
+                       
                         <th class="py-3 px-4 text-left rounded-tr-lg">การดำเนินการ</th>
                     </tr>
                 </thead>
@@ -107,12 +108,16 @@
                                     </span>
                                 </div>
                             </div>
-                        </td>
+                     
                         <td class="py-3 px-4">
                             <div class="flex flex-col gap-2">
-                                <a href="{% url 'accept_appointment' appointment.id %}" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300 flex items-center justify-center">
-                                    <i class="fas fa-check mr-2"></i> อนุมัติ
-                                </a>
+                                <!-- โดยตรงไม่ผ่าน confirm -->
+                                <form method="POST" action="{% url 'accept_appointment' appointment.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300 flex items-center justify-center w-full">
+                                        <i class="fas fa-check mr-2"></i> อนุมัติ
+                                    </button>
+                                </form>
                                 <a href="{% url 'reject_appointment' appointment.id %}" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center">
                                     <i class="fas fa-times mr-2"></i> ปฏิเสธ
                                 </a>
@@ -121,7 +126,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="py-8 text-center text-gray-500">
+                        <td colspan="8" class="py-8 text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center">
                                 <i class="fas fa-calendar-times text-gray-400 text-2xl mb-3"></i>
                                 <p>ไม่มีการนัดหมายที่รอการอนุมัติในขณะนี้</p>
@@ -149,65 +154,124 @@
                         <th class="py-3 px-4 text-left">เวลา</th>
                         <th class="py-3 px-4 text-left">หัวข้อโครงงาน</th>
                         <th class="py-3 px-4 text-left">นักศึกษา</th>
+                        <th class="py-3 px-4 text-left">ข้อมูลโครงงาน</th>
                         <th class="py-3 px-4 text-left">สถานที่</th>
                         <th class="py-3 px-4 text-left rounded-tr-lg">ลิงก์ประชุม</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for appointment in confirmed_appointments %}
-<tr class="border-b border-gray-100 hover:bg-green-50 transition-colors duration-150">
-    <td class="py-3 px-4">
-        <div class="flex items-center">
-            <i class="fas fa-calendar-day mr-2 text-green-600"></i>
-            <span>{{ appointment.date }}</span>
-        </div>
-    </td>
-    <td class="py-3 px-4">
-        <div class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 text-sm inline-flex items-center">
-            <i class="fas fa-clock mr-2 text-green-500"></i>
-            {{ appointment.time_start }} - {{ appointment.time_finish }}
-        </div>
-    </td>
-    <td class="py-3 px-4 font-medium text-black">{{ appointment.project.topic }}</td>
-    <td class="py-3 px-4">
-        <div class="space-y-1 max-w-xs">
-            {% for student in appointment.students.all %}
-            <div class="bg-blue-50 px-3 py-1 rounded-lg text-sm text-black border border-blue-100 flex items-center">
-                {{ student.get_full_name }}
-            </div>
-            {% endfor %}
-        </div>
-    </td>
-    <td class="py-3 px-4">
-        {% if appointment.location %}
-            <div class="flex items-center">
-                <i class="fas fa-map-marker-alt mr-2 text-green-600"></i>
-                <span>{{ appointment.location }}</span>
-            </div>
-        {% else %}
-            <span class="text-gray-500">ยังไม่ระบุ</span>
-        {% endif %}
-    </td>
-    <td class="py-3 px-4">
-        {% if appointment.meeting_link %}
-            <a href="{{ appointment.meeting_link }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center">
-                <i class="fas fa-video mr-2"></i> เข้าร่วมประชุม
-            </a>
-        {% else %}
-            <span class="text-gray-500">ไม่มีลิงก์</span>
-        {% endif %}
-    </td>
-</tr>
-{% empty %}
-<tr>
-    <td colspan="6" class="py-8 text-center text-gray-500">
-        <div class="flex flex-col items-center justify-center">
-            <i class="fas fa-calendar-check text-gray-400 text-2xl mb-3"></i>
-            <p>ไม่มีการนัดหมายที่ได้รับการยืนยันในขณะนี้</p>
-        </div>
-    </td>
-</tr>
-{% endfor %}
+                    <tr class="border-b border-gray-100 hover:bg-green-50 transition-colors duration-150">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-day mr-2 text-green-600"></i>
+                                <span>{{ appointment.date }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 text-sm inline-flex items-center">
+                                <i class="fas fa-clock mr-2 text-green-500"></i>
+                                {{ appointment.time_start }} - {{ appointment.time_finish }}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 font-medium text-black">{{ appointment.project.topic }}</td>
+                        <td class="py-3 px-4">
+                            <div class="space-y-1 max-w-xs">
+                                {% for student in appointment.students.all %}
+                                <div class="bg-blue-50 px-3 py-1 rounded-lg text-sm text-black border border-blue-100 flex items-center">
+                                    {{ student.get_full_name }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <!-- ข้อมูลโครงงาน (รวมไฟล์/ลิงก์และรายละเอียด) -->
+                        <td class="py-3 px-4">
+                            <div class="space-y-3">
+                                <!-- รายละเอียดโปรเจค -->
+                                <div class="space-y-2 max-w-xs">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar-alt mr-2 text-gray-600"></i>
+                                        <span class="text-gray-700"><strong>ปี:</strong> {{ appointment.project.year }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user-tie mr-2 text-gray-600"></i>
+                                        <span class="text-gray-700 truncate"><strong>ที่ปรึกษา:</strong> {{ appointment.project.advisor.get_full_name }}</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <i class="fas fa-users mr-2 text-gray-600 mt-1"></i>
+                                        <span class="text-gray-700"><strong>กรรมการ:</strong>
+                                            <div class="flex flex-wrap gap-1 mt-1">
+                                                {% for member in appointment.project.committee.all %}
+                                                <span class="bg-amber-50 px-2 py-0.5 rounded text-xs text-amber-700 border border-amber-100">
+                                                    {{ member.get_full_name }}
+                                                </span>
+                                                {% endfor %}
+                                            </div>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- ไฟล์/ลิงก์ -->
+                                {% if appointment.project.files.all %}
+                                <div class="pt-2 border-t border-gray-100">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-paperclip text-green-600 mr-2"></i>
+                                        <p class="text-sm font-medium text-gray-700">ไฟล์/ลิงก์:</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        {% for file in appointment.project.files.all %}
+                                        <div>
+                                            {% if file.file %}
+                                            <a href="{{ file.file.url }}" class="flex items-center bg-green-50 px-3 py-2 rounded-lg text-green-600 hover:bg-green-100 transition-colors duration-200" target="_blank">
+                                                <i class="fas fa-file-pdf text-green-500 mr-2"></i>
+                                                <span class="truncate max-w-[150px]">{{ file.file.name }}</span>
+                                                <i class="fas fa-external-link-alt ml-2"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if file.url %}
+                                            <a href="{{ file.url }}" class="flex items-center bg-green-50 px-3 py-2 rounded-lg text-green-600 hover:bg-green-100 transition-colors duration-200" target="_blank">
+                                                <i class="fas fa-link text-green-500 mr-2"></i>
+                                                <span class="truncate max-w-[150px]">{{ file.url }}</span>
+                                                <i class="fas fa-external-link-alt ml-2"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if appointment.location %}
+                                <div class="flex items-center">
+                                    <i class="fas fa-map-marker-alt mr-2 text-green-600"></i>
+                                    <span>{{ appointment.location }}</span>
+                                </div>
+                            {% else %}
+                                <span class="text-gray-500">ยังไม่ระบุ</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if appointment.meeting_link %}
+                                <a href="{{ appointment.meeting_link }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center">
+                                    <i class="fas fa-video mr-2"></i> เข้าร่วมประชุม
+                                </a>
+                            {% else %}
+                                <span class="text-gray-500">ไม่มีลิงก์</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-calendar-check text-gray-400 text-2xl mb-3"></i>
+                                <p>ไม่มีการนัดหมายที่ได้รับการยืนยันในขณะนี้</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

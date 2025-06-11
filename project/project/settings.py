@@ -38,16 +38,17 @@ INSTALLED_APPS = [
     'myapp.apps.MyappConfig', 
     'django_extensions', 
     'social_django',
+    'widget_tweaks',
 
     
 ]
 TAILWIND_APP_NAME = 'theme'
 MIDDLEWARE = [
-    'myapp.middleware.NoCacheMiddleware', 
-    "django.middleware.security.SecurityMiddleware",
+    #'myapp.middleware.NoCacheMiddleware', 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-   
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -171,5 +172,13 @@ LOGIN_URL = '/login/'
 LOGOUT_REDIRECT_URL = '/login/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 ALLOWED_HOSTS = ['*']  
-SECURE_REDIRECT_EXEMPT = ['portal.ubu.ac.th']  
-
+# เพิ่ม/แก้ไขการตั้งค่าเหล่านี้
+SESSION_COOKIE_NAME = 'myapp_session'
+SESSION_COOKIE_AGE = 86400  # 1 วัน (หน่วยวินาที)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+USE_I18N = True
+USE_L10N = True
+LANGUAGE_CODE = 'th'  # หรือ 'th-th'
+TIME_ZONE = 'Asia/Bangkok'
+SESSION_ENGINE = "django.contrib.sessions.backends.db"

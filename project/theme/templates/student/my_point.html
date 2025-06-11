@@ -42,19 +42,19 @@
                         <td class="py-4 px-6 text-center">
                             <!-- คะแนนเฉลี่ยแบบวงกลมปรับปรุงใหม่ -->
                             <div class="flex justify-center">
-                                {% if score.average_score >= 1 and score.average_score <= 30 %}
+                                {% if score.average_score >= 10 and score.average_score <= 15 %}
                                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
                                         {{ score.average_score }}
                                     </div>
-                                {% elif score.average_score > 30 and score.average_score <= 50 %}
+                                {% elif score.average_score > 15 and score.average_score <= 25 %}
                                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
                                         {{ score.average_score }}
                                     </div>
-                                {% elif score.average_score > 50 and score.average_score <= 70 %}
+                                {% elif score.average_score > 25 and score.average_score <= 35 %}
                                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
                                         {{ score.average_score }}
                                     </div>
-                                {% elif score.average_score > 70 and score.average_score <= 100 %}
+                                {% elif score.average_score > 35 and score.average_score <= 50 %}
                                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold shadow-md transform transition-transform hover:scale-110">
                                         {{ score.average_score }}
                                     </div>

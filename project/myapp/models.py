@@ -49,9 +49,22 @@ class News(models.Model):
 class Project(models.Model):
     topic = models.CharField(max_length=255)
     year = models.CharField(max_length=4)
-    students = models.ManyToManyField(Student)
+    students = models.ManyToManyField(Student, related_name='projects')
     advisor = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='advised_projects')
     committee = models.ManyToManyField(Teacher, related_name='committee_projects')
+    def add_student(self, student):
+        """เพิ่มนักศึกษาเข้าโปรเจค"""
+        if student not in self.students.all():
+            self.students.add(student)
+            return True
+        return False
+
+    def remove_student(self, student):
+        """ลบนักศึกษาออกจากโปรเจค"""
+        if student in self.students.all():
+            self.students.remove(student)
+            return True
+        return False
 
 class Appointment(models.Model):
     date = models.DateField()
@@ -62,10 +75,14 @@ class Appointment(models.Model):
     location = models.CharField(max_length=255)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     students = models.ManyToManyField(Member)
+    teachers = models.ManyToManyField(Teacher, related_name='teacher_appointments', blank=True)
     status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
-
+    rejection_reason = models.TextField(blank=True, null=True) 
+    accepted_teachers = models.TextField(blank=True, null=True) 
     def __str__(self):
         return f"Appointment for {self.project.topic} on {self.date} at {self.time_start}"
+    
+    
     
 class AvailableTime(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)

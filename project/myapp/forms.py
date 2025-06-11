@@ -3,9 +3,12 @@ from .models import *
 
 
 class EditProfileForm(forms.ModelForm):
-    first_name = forms.CharField(label="ชื่อจริง", max_length=100, required=True)
-    last_name = forms.CharField(label="นามสกุล", max_length=100, required=True)
-    student_id = forms.CharField(label="รหัสนักศึกษา", max_length=13, required=True)
+    student_id = forms.CharField(
+        label="รหัสนักศึกษา", 
+        max_length=13, 
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
 
     class Meta:
         model = Student
@@ -14,22 +17,38 @@ class EditProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # ดึงข้อมูลจาก Member (superclass)
-        if self.instance and self.instance.member_ptr:
-            self.fields['first_name'].initial = self.instance.member_ptr.first_name
-            self.fields['last_name'].initial = self.instance.member_ptr.last_name
+        # เพิ่มฟิลด์ display-only สำหรับชื่อจริงและนามสกุล
+        self.fields['display_first_name'] = forms.CharField(
+            label="ชื่อจริง",
+            required=False,
+            widget=forms.TextInput(attrs={
+                'readonly': True,
+                'class': 'form-control bg-light'
+            })
+        )
+        
+        self.fields['display_last_name'] = forms.CharField(
+            label="นามสกุล",
+            required=False,
+            widget=forms.TextInput(attrs={
+                'readonly': True,
+                'class': 'form-control bg-light'
+            })
+        )
+        
+        # ตั้งค่าชื่อจาก User model
+        if self.instance and hasattr(self.instance, 'member_ptr'):
+            self.fields['display_first_name'].initial = self.instance.member_ptr.first_name
+            self.fields['display_last_name'].initial = self.instance.member_ptr.last_name
 
-
-
-class StudentProfileForm(forms.Form):
-    """ ฟอร์มสำหรับแก้ไขข้อมูลโปรไฟล์นักศึกษา """
-    student_id = forms.CharField(label="รหัสนักศึกษา", max_length=10, required=True)
-    full_name = forms.CharField(label="ชื่อ-นามสกุล", max_length=100, required=True, disabled=True)
-    email = forms.EmailField(label="อีเมล", required=True, disabled=True)
+class RejectAppointmentForm(forms.Form):
+    rejection_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'class': 'w-full rounded-md border-gray-300'}),
+        label="เหตุผลในการปฏิเสธ",
+        required=True
+    )
 
 class AppointmentForm(forms.ModelForm):
-
-
     class Meta:
         model = Appointment
         fields = ['date', 'time_start', 'time_finish', 'project', 'students', 'location', 'meeting_link']
@@ -44,40 +63,52 @@ class AppointmentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         student = kwargs.pop('student', None)  # รับ student จาก kwargs
         super().__init__(*args, **kwargs)
-
         # กำหนด queryset สำหรับฟิลด์ project
         if student:
             self.fields['project'].queryset = Project.objects.filter(students=student)
-
+            
+    
 class ProjectForm(forms.ModelForm):
-    committee = forms.ModelMultipleChoiceField(
-        queryset=Teacher.objects.all(),
+    students = forms.ModelMultipleChoiceField(
+        queryset=Student.objects.all(),
         required=False,
-        widget=forms.CheckboxSelectMultiple,  # ใช้ checkbox สำหรับเลือกกรรมการ
-        label='Committee Members',
+        widget=forms.SelectMultiple(attrs={'class': 'hidden-select'}),
+        label='นักศึกษาในโครงงาน'
     )
     class Meta:
         model = Project
-        fields = ['topic', 'year', 'advisor', 'committee']
+        fields = ['topic', 'year', 'advisor', 'students']
         widgets = {
-            'topic': forms.TextInput(attrs={'class': 'mt-1 p-3 w-full border rounded-md'}),
-            'year': forms.TextInput(attrs={'class': 'mt-1 p-3 w-full border rounded-md'}),
-            'advisor': forms.Select(attrs={'class': 'mt-1 p-3 w-full border rounded-md'}),
-          
+            'topic': forms.TextInput(attrs={'class': 'w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'placeholder': 'กรอกหัวข้อโครงงาน'}),
+            'year': forms.TextInput(attrs={'class': 'w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 'placeholder': 'กรอกปี'}),
+            'advisor': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Make sure the queryset for both fields is correctly set
-        self.fields['advisor'].queryset = Teacher.objects.all()  # Set the queryset for advisor field
-        self.fields['committee'].queryset = Teacher.objects.all()  # Set the queryset for committee field
-        self.fields['committee'].required = False  # Committee members are optional
-
-        # This will ensure the names are displayed in the dropdown and checkboxes
-        self.fields['advisor'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name}"
-        self.fields['committee'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name}"
-
+        # Make sure the queryset is correctly set
+        self.fields['advisor'].queryset = Teacher.objects.all()
         
+        # ให้ queryset ของ students แสดงเฉพาะนักศึกษา
+        self.fields['students'].queryset = Student.objects.all()
+        
+        # This will ensure the names are displayed in the dropdown
+        self.fields['advisor'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name}"
+        self.fields['students'].label_from_instance = lambda obj: f"{obj.student_id} - {obj.first_name} {obj.last_name}"
+
+    def clean_students(self):
+        """ตรวจสอบความถูกต้องของนักศึกษา"""
+        students = self.cleaned_data.get('students', [])
+        
+        if len(students) > 5:
+            raise forms.ValidationError("เลือกนักศึกษาได้ไม่เกิน 5 คน")
+        
+        # ตรวจสอบความซ้ำซ้อน
+        if len(set(students)) != len(students):
+            raise forms.ValidationError("มีนักศึกษาซ้ำกัน")
+        
+        return students
+
 class FileForm(forms.ModelForm):
     class Meta:
         model = File
@@ -121,10 +152,26 @@ class AvailableTimeForm(forms.ModelForm):
             'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'p-2 border rounded-md w-full'}),
         }
 
+
 class ScoreForm(forms.ModelForm):
     class Meta:
         model = Score
         fields = ['project', 'student', 'score', 'comment']
+        widgets = {
+            'score': forms.NumberInput(attrs={'min': 0, 'max': 100}),
+            'comment': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        project_id = kwargs.pop('project_id', None)
+        super().__init__(*args, **kwargs)
         
-    project = forms.ModelChoiceField(queryset=Project.objects.all(), label="เลือกโปรเจค")
-    student = forms.ModelChoiceField(queryset=Student.objects.all(), label="เลือกนักศึกษา")
+        if project_id:
+            try:
+                project = Project.objects.get(id=project_id)
+                self.fields['project'].initial = project
+                self.fields['project'].widget = forms.HiddenInput()
+                self.fields['student'].queryset = project.students.all()
+                self.fields['student'].label_from_instance = lambda obj: f"{obj.student_id} - {obj.get_full_name()}"
+            except Project.DoesNotExist:
+                pass

@@ -29,7 +29,7 @@
     
     <div class="flex justify-between items-center mb-4">
         <!-- ปุ่มดาวน์โหลด CSV -->
-        <a href="{% url 'export_projects_csv' %}{% if selected_year %}?year={{ selected_year }}{% endif %}" 
+        <a href="{% url 'export_projects_csv' %}?year={{ request.GET.year|default:'' }}" 
            class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition">
             <i class="fas fa-download mr-2"></i> ดาวน์โหลด CSV
         </a>
@@ -41,6 +41,10 @@
 
     <!-- ตารางแสดงข้อมูลโครงงาน -->
     <div class="overflow-x-auto bg-white rounded-lg shadow">
+        <div class="p-4 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">รายการโครงงานนักศึกษา</h2>
+        
+        </div>
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -50,6 +54,8 @@
                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ปี</th>
                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อาจารย์ที่ปรึกษา</th>
                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กรรมการ</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ไฟล์ที่อัปโหลด</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ลิงก์ภายนอก</th>
                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
                 </tr>
             </thead>
@@ -57,8 +63,8 @@
                 {% for data in project_data %}
                 <tr class="hover:bg-gray-50">
                     <td class="p-3 text-sm text-gray-900">{{ data.project_topic }}</td>
-                    <td class="p-3 text-sm text-gray-900">{{ data.student_id }}</td>
-                    <td class="p-3 text-sm text-gray-900">{{ data.student_name }}</td>
+                    <td class="p-3 text-sm text-gray-900">{{ data.student_ids }}</td>
+                    <td class="p-3 text-sm text-gray-900">{{ data.student_names }}</td>
                     <td class="p-3 text-sm text-gray-900">{{ data.year }}</td>
                     <td class="p-3 text-sm text-gray-900">{{ data.advisor }}</td>
                     <td class="p-3 text-sm text-gray-900">
@@ -67,6 +73,38 @@
                         {% else %}
                             <span class="text-gray-500">ไม่มีกรรมการ</span>
                         {% endif %}
+                    </td>
+                    <td class="p-3 text-sm text-gray-900">
+                        {% for file in data.uploaded_files %}
+                            <div class="mb-1">
+                                <a href="{{ file.url }}" 
+                                   download
+                                   class="text-blue-600 hover:text-blue-800 hover:underline flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    {{ file.name }}
+                                </a>
+                            </div>
+                        {% empty %}
+                            <span class="text-gray-500">ไม่มีไฟล์</span>
+                        {% endfor %}
+                    </td>
+                    <td class="p-3 text-sm text-gray-900">
+                        {% for link in data.external_links %}
+                            <div class="mb-1">
+                                <a href="{{ link.url }}" 
+                                   target="_blank"
+                                   class="text-green-600 hover:text-green-800 hover:underline flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                    </svg>
+                                    {{ link.domain }}
+                                </a>
+                            </div>
+                        {% empty %}
+                            <span class="text-gray-500">ไม่มีลิงก์</span>
+                        {% endfor %}
                     </td>
                     <td class="p-3 text-sm">
                         <button onclick="openCommitteeModal('{{ data.project_id }}')" 
@@ -77,7 +115,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="p-4 text-center text-gray-500">ไม่พบข้อมูลโครงงาน</td>
+                    <td colspan="9" class="p-4 text-center text-gray-500">ไม่พบข้อมูลโครงงาน</td>
                 </tr>
                 {% endfor %}
             </tbody>

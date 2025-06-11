@@ -5,12 +5,12 @@
     <div class="relative mb-6 text-center">
         <h2 class="text-3xl font-bold text-[#19335A] inline-block relative">
             <span class="relative z-10">ลงเวลาว่าง</span>
-            <span class="absolute -bottom-2 left-0 w-full h-3  opacity-70 rounded-lg"></span>
+            <span class="absolute -bottom-2 left-0 w-full h-3 opacity-70 rounded-lg"></span>
         </h2>
     </div>
     
     <!-- ตารางเวลา -->
-    <div class="bg-white rounded-lg p-4 mb-6">
+    <div class="bg-white rounded-lg p-4 mb-6 shadow-md">
         <div class="flex items-center mb-3">
             <div class="w-2 h-8 bg-blue-500 rounded-full mr-3"></div>
             <h3 class="text-xl font-bold text-gray-700">เลือกวันและเวลา</h3>
@@ -28,10 +28,10 @@
             
             <div>
                 <p class="block text-gray-700 text-lg font-medium mb-2">เลือกช่วงเวลา:</p>
-                <div class="grid grid-cols-4 gap-2" id="time-grid">
+                <div class="grid grid-cols-4 gap-2 sm:grid-cols-5 md:grid-cols-6" id="time-grid">
                     <!-- เวลา 8:00 - 17:00 -->
                     {% for hour in hours %}
-                    <div class="border border-gray-200 rounded-md text-center cursor-pointer hover:bg-[#8FCFEB] hover:text-white transition-all">
+                    <div class="border border-gray-200 rounded-md text-center cursor-pointer hover:bg-[#8FCFEB] hover:text-white transition-all duration-200">
                         <div class="py-2">
                             <span class="block text-lg">{{ hour }}:00</span>
                         </div>
@@ -41,14 +41,14 @@
             
             </div>
             
-            <button id="save-time" class="w-full bg-[#2563EB] text-white py-2 px-4 rounded-md hover:bg-[#1E4BB5] transition-all font-medium">
+            <button id="save-time" class="w-full bg-[#2563EB] text-white py-2 px-4 rounded-md hover:bg-[#1E4BB5] transition-all duration-200 font-medium">
                 บันทึกเวลา
             </button>
         </div>
     </div>
 
     <!-- รายการเวลาว่าง -->
-    <div class="bg-white rounded-lg p-4">
+    <div class="bg-white rounded-lg p-4 shadow-md">
         <div class="flex items-center mb-3">
             <div class="w-2 h-8 bg-blue-500 rounded-full mr-3"></div>
             <h3 class="text-xl font-bold text-gray-700">รายการเวลาว่าง</h3>
@@ -56,12 +56,12 @@
         
         <div class="space-y-3">
             {% for time in available_times %}
-            <div class="border border-gray-100 rounded-md p-3 hover:shadow-sm transition-all time-slot" data-id="{{ time.id }}">
+            <div class="border border-gray-100 rounded-md p-3 hover:shadow-md transition-all duration-200 time-slot" data-id="{{ time.id }}" data-created-at="{{ time.created_at|date:'Y-m-d H:i:s' }}">
                 <div class="flex justify-between items-center">
                     <div>
                         <p class="text-gray-700 mb-1">
                             <span class="font-medium">วันที่:</span> 
-                            <span class="date">{{ time.date }}</span>
+                            <span class="date" data-date="{{ time.date|date:'Y-m-d' }}">{{ time.date|date:"d/m/Y" }}</span>
                         </p>
                         <p class="text-gray-700">
                             <span class="font-medium">เวลา:</span> 
@@ -69,14 +69,17 @@
                         </p>
                     </div>
                     
-                    <div>
+                    <div class="flex items-center space-x-2">
                         {% if time.can_edit %}
-                        <button class="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-all delete-time">
+                        <button class="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-all duration-200 edit-time">
+                            แก้ไข
+                        </button>
+                        <button class="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-all duration-200 delete-time">
                             ลบ
                         </button>
                         {% else %}
                         <span class="text-red-500 text-sm inline-block px-2 py-1 bg-red-50 rounded-md">
-                            หมดเวลาลบ
+                            หมดเวลาแก้ไข
                         </span>
                         {% endif %}
                     </div>
@@ -91,90 +94,247 @@
     </div>
 </div>
 
-<!-- JavaScript remains unchanged -->
+<!-- Modal สำหรับแก้ไขเวลา -->
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">แก้ไขเวลาว่าง</h3>
+        
+        <div class="space-y-4">
+            <div>
+                <label for="edit-date" class="block text-gray-700 font-medium mb-1">วันที่:</label>
+                <input 
+                    type="date" 
+                    id="edit-date" 
+                    class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                >
+            </div>
+            
+            <div>
+                <label for="edit-start-time" class="block text-gray-700 font-medium mb-1">เวลาเริ่ม:</label>
+                <select id="edit-start-time" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    {% for hour in hours %}
+                    <option value="{{ hour }}:00">{{ hour }}:00</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="edit-end-time" class="block text-gray-700 font-medium mb-1">เวลาสิ้นสุด:</label>
+                <select id="edit-end-time" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    {% for hour in hours %}
+                    <option value="{{ hour }}:00">{{ hour }}:00</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <input type="hidden" id="edit-time-id">
+            
+            <div class="flex space-x-3 mt-6">
+                <button id="save-edit" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-all duration-200 flex-1 font-medium">บันทึก</button>
+                <button id="cancel-edit" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-all duration-200 flex-1">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript with fixes -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const timeGrid = document.getElementById('time-grid');
         const saveButton = document.getElementById('save-time');
         const deleteButtons = document.querySelectorAll('.delete-time');
+        const editButtons = document.querySelectorAll('.edit-time');
+        const editModal = document.getElementById('editModal');
+        const saveEditButton = document.getElementById('save-edit');
+        const cancelEditButton = document.getElementById('cancel-edit');
         let selectedStartTime = null;
         let selectedEndTime = null;
     
-        // ฟังก์ชันแปลงวันที่เป็นภาษาไทย
+        // ฟังก์ชันแปลงวันที่เป็นภาษาไทย - แก้ไขให้รองรับการแปลงที่ถูกต้อง
         function formatThaiDate(dateString) {
-            const date = new Date(dateString);
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return date.toLocaleDateString('th-TH', options);
+            try {
+                // รับวันที่ในรูปแบบ YYYY-MM-DD จาก data-date
+                const date = new Date(dateString);
+                
+                // ตรวจสอบว่าวันที่ถูกต้องหรือไม่
+                if (isNaN(date.getTime())) {
+                    console.warn("Invalid date:", dateString);
+                    return dateString;
+                }
+                
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('th-TH', options);
+            } catch (e) {
+                console.error("Error formatting date:", e, dateString);
+                return dateString;
+            }
         }
     
-        // ฟังก์ชันแปลงวันที่และเวลาเป็นภาษาไทย
+        // ฟังก์ชันแปลงวันที่และเวลาเป็นภาษาไทย - แก้ไขให้รองรับการแปลงที่ถูกต้อง
         function formatThaiDateTime(dateString, timeString) {
-            const date = new Date(dateString);
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            const thaiDate = date.toLocaleDateString('th-TH', options);
-    
-            const time = new Date(`1970-01-01T${timeString}:00`);
-            const thaiTime = time.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: true });
-    
-            return { thaiDate, thaiTime };
+            try {
+                const date = new Date(dateString);
+                
+                // ตรวจสอบว่าวันที่ถูกต้องหรือไม่
+                if (isNaN(date.getTime())) {
+                    return { 
+                        thaiDate: dateString, 
+                        thaiTime: timeString 
+                    };
+                }
+                
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                const thaiDate = date.toLocaleDateString('th-TH', options);
+        
+                // แปลงเวลา
+                let thaiTime = timeString;
+                try {
+                    const time = new Date(`1970-01-01T${timeString}`);
+                    if (!isNaN(time.getTime())) {
+                        thaiTime = time.toLocaleTimeString('th-TH', { 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            hour12: true 
+                        });
+                    }
+                } catch (e) {
+                    console.warn("Could not format time:", e);
+                }
+        
+                return { thaiDate, thaiTime };
+            } catch (e) {
+                console.error("Error in formatThaiDateTime:", e);
+                return { 
+                    thaiDate: dateString, 
+                    thaiTime: timeString 
+                };
+            }
         }
     
-        // แปลงวันที่ในส่วนของ "รายการเวลาว่าง"
+        // แปลงวันที่ในส่วนของ "รายการเวลาว่าง" - แก้ไขให้ใช้ data-date
         const dateElements = document.querySelectorAll('.date');
         dateElements.forEach(function(dateElement) {
-            const date = dateElement.textContent;
-            const thaiDate = formatThaiDate(date);
-            dateElement.textContent = thaiDate;
+            const dateValue = dateElement.getAttribute('data-date'); // ดึงค่าจาก data-date ที่เพิ่มใหม่
+            if (dateValue) {
+                try {
+                    const thaiDate = formatThaiDate(dateValue);
+                    // แสดงวันที่ในรูปแบบไทยหากแปลงสำเร็จ ไม่ใช่แก้ไขค่าเดิม
+                    if (thaiDate && thaiDate !== "Invalid Date") {
+                        dateElement.textContent = thaiDate;
+                    }
+                } catch (e) {
+                    console.error("Error displaying Thai date:", e);
+                }
+            }
         });
+        
+        // ตรวจสอบเวลาที่สร้างและกำหนดสถานะการแก้ไข
+        function checkEditableTime() {
+            const timeSlots = document.querySelectorAll('.time-slot');
+            const now = new Date();
+            
+            timeSlots.forEach(function(slot) {
+                try {
+                    const createdAt = new Date(slot.getAttribute('data-created-at'));
+                    const editButtons = slot.querySelectorAll('.edit-time, .delete-time');
+                    const infoSpan = slot.querySelector('.text-red-500');
+                    
+                    if (isNaN(createdAt.getTime())) return; // ข้ามถ้าวันที่ไม่ถูกต้อง
+                    
+                    // คำนวณความต่างของเวลาเป็นวินาที
+                    const diffTime = Math.abs(now - createdAt);
+                    const diffSeconds = Math.floor(diffTime / 1000);
+                    
+                    // ตรวจสอบว่าสร้างมาเกิน 1 นาที (60 วินาที) หรือไม่
+                    if (diffSeconds > 60) {
+                        // ซ่อนปุ่มแก้ไขและลบ
+                        if (editButtons && editButtons.length > 0) {
+                            editButtons.forEach(button => {
+                                button.classList.add('hidden');
+                            });
+                        }
+                        
+                        // แสดงข้อความแจ้งเตือน
+                        if (infoSpan) {
+                            infoSpan.classList.remove('hidden');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error in checkEditableTime:", e);
+                }
+            });
+        }
     
-        // ฟังก์ชันตรวจสอบและลบเวลาที่หมดอายุ
+        // ฟังก์ชันตรวจสอบและลบเวลาที่หมดอายุ - แก้ไขให้ใช้ data-date
         function checkAndDeleteExpiredTimes() {
             const timeSlots = document.querySelectorAll('.time-slot');
             const now = new Date();  // เวลาปัจจุบัน
     
             timeSlots.forEach(function(slot) {
-                const date = slot.querySelector('.date').textContent;
-                const endTime = slot.querySelector('.end-time').textContent;
-                const timeId = slot.dataset.id;
-    
-                // สร้างวันที่และเวลาจากข้อมูลใน DOM
-                const endDateTime = new Date(`${date}T${endTime}:00`);
-    
-                // ตรวจสอบว่าเวลาปัจจุบันเกินเวลาสิ้นสุดหรือไม่
-                if (now > endDateTime) {
-                    // แปลงวันที่และเวลาเป็นภาษาไทย
-                    const { thaiDate, thaiTime: thaiEndTime } = formatThaiDateTime(date, endTime);
-    
-                    // ส่งคำขอลบข้อมูล
-                    fetch('{% url "delete_available_time" %}', {
-                        method: 'POST',
-                        body: JSON.stringify({ id: timeId }),
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            console.log(`ลบเวลาที่หมดอายุแล้ว: ${thaiDate} ${thaiEndTime}`);
-                            slot.remove();  // ลบออกจาก DOM
-                        } else {
-                            console.error('เกิดข้อผิดพลาดในการลบเวลาที่หมดอายุ');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+                try {
+                    const dateElement = slot.querySelector('.date');
+                    if (!dateElement) return; // ข้ามถ้าไม่พบ element
+
+                    const dateValue = dateElement.getAttribute('data-date'); // ใช้ data-date
+                    if (!dateValue) return; // ข้ามถ้าไม่มีข้อมูลวันที่
+
+                    const endTimeElement = slot.querySelector('.end-time');
+                    if (!endTimeElement) return; // ข้ามถ้าไม่พบ element
+
+                    const endTime = endTimeElement.textContent;
+                    const timeId = slot.dataset.id;
+
+                    // สร้างวันที่และเวลาจากข้อมูล
+                    const endDateTime = new Date(`${dateValue}T${endTime}`);
+        
+                    // ตรวจสอบว่าเวลาปัจจุบันเกินเวลาสิ้นสุดหรือไม่
+                    if (!isNaN(endDateTime.getTime()) && now > endDateTime) {
+                        // แปลงวันที่และเวลาเป็นภาษาไทย
+                        const { thaiDate, thaiTime: thaiEndTime } = formatThaiDateTime(dateValue, endTime);
+        
+                        // ส่งคำขอลบข้อมูล
+                        fetch('{% url "delete_available_time" %}', {
+                            method: 'POST',
+                            body: JSON.stringify({ id: timeId }),
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log(`ลบเวลาที่หมดอายุแล้ว: ${thaiDate} ${thaiEndTime}`);
+                                slot.remove();  // ลบออกจาก DOM
+                            } else {
+                                console.error('เกิดข้อผิดพลาดในการลบเวลาที่หมดอายุ');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error checking expired times:", e);
                 }
             });
+            
+            // ตรวจสอบสถานะการแก้ไขของเวลาทุกครั้ง
+            checkEditableTime();
         }
     
+        // เรียกฟังก์ชันตรวจสอบครั้งแรกทันที
+        checkEditableTime();
+        
+        // เรียกฟังก์ชันตรวจสอบและลบเวลาที่หมดอายุทันทีที่โหลดหน้า
+        checkAndDeleteExpiredTimes();
+        
         // เรียกฟังก์ชันตรวจสอบและลบเวลาที่หมดอายุทุก 1 นาที
         setInterval(checkAndDeleteExpiredTimes, 60000);  // 60000 มิลลิวินาที = 1 นาที
     
         timeGrid.addEventListener('click', function(event) {
-            const cell = event.target.closest('div.cursor-pointer');
+            // ดูว่าคลิกที่ element ใด
+            const cell = event.target.closest('div.border');
             if (cell) {
                 const time = cell.querySelector('span').textContent;
         
@@ -189,6 +349,79 @@
                     if (time === selectedEndTime) selectedEndTime = null;
                     cell.classList.remove('bg-[#8FCFEB]', 'text-white');
                 }
+            }
+        });
+        
+        // การจัดการปุ่มแก้ไขเวลา
+        editButtons.forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                const timeSlot = event.target.closest('.time-slot');
+                const timeId = timeSlot.dataset.id;
+                const dateElement = timeSlot.querySelector('.date');
+                const dateValue = dateElement.getAttribute('data-date');
+                const startTime = timeSlot.querySelector('.start-time').textContent;
+                const endTime = timeSlot.querySelector('.end-time').textContent;
+                
+                // กำหนดค่าในโมดัลแก้ไข
+                document.getElementById('edit-date').value = dateValue;
+                document.getElementById('edit-start-time').value = startTime;
+                document.getElementById('edit-end-time').value = endTime;
+                document.getElementById('edit-time-id').value = timeId;
+                
+                // แสดงโมดัล
+                editModal.classList.remove('hidden');
+            });
+        });
+        
+        // ปุ่มบันทึกการแก้ไข
+        saveEditButton.addEventListener('click', function() {
+            const timeId = document.getElementById('edit-time-id').value;
+            const date = document.getElementById('edit-date').value;
+            const startTime = document.getElementById('edit-start-time').value;
+            const endTime = document.getElementById('edit-end-time').value;
+            
+            if (!date || !startTime || !endTime) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('id', timeId);
+            formData.append('date', date);
+            formData.append('start_time', startTime);
+            formData.append('end_time', endTime);
+            
+            fetch('{% url "save_available_time" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('แก้ไขเวลาสำเร็จ');
+                    window.location.reload();
+                } else {
+                    alert('เกิดข้อผิดพลาดในการแก้ไขเวลา');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาด');
+            });
+        });
+        
+        // ปุ่มยกเลิกการแก้ไข
+        cancelEditButton.addEventListener('click', function() {
+            editModal.classList.add('hidden');
+        });
+        
+        // ปิดโมดัลเมื่อคลิกพื้นหลัง
+        editModal.addEventListener('click', function(event) {
+            if (event.target === editModal) {
+                editModal.classList.add('hidden');
             }
         });
         

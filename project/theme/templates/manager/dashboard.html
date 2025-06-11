@@ -1,65 +1,72 @@
+
 {% extends 'base3.html' %}
 {% block title %}แดชบอร์ดผู้จัดการ{% endblock %}
 {% block content %}
-<div class="wrapper p-8 bg-gray-50">
-    <section class="overview-container">
-        <h2 class="text-3xl font-bold mb-6 text-gray-800">ภาพรวมของระบบ</h2>
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <!-- ช่องว่างด้านซ้ายเพื่อให้ 2 กล่องอยู่ตรงกลาง -->
+<div class="wrapper p-6 md:p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <section class="overview-container max-w-7xl mx-auto">
+        <h2 class="text-3xl font-bold mb-6 text-gray-800 animate-fade-in-down">ภาพรวมของระบบ</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
             <div class="hidden md:block md:col-span-3"></div>
             
-            <!-- กล่องผู้ใช้ทั้งหมด - ปรับขนาดลง -->
-            <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 text-center flex flex-col justify-between h-[320px] md:col-span-3">
+            <!-- User Overview Card -->
+            <div class="bg-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 
+                        transform hover:-translate-y-2 text-center flex flex-col justify-between 
+                        h-[320px] md:col-span-3 animate-fade-in-left">
                 <div class="text-center">
-                    <div class="bg-blue-100 h-12 w-12 flex items-center justify-center rounded-full mx-auto mb-1">
-                        <i class="fas fa-users text-blue-600"></i>
+                    <div class="bg-blue-100 h-14 w-14 flex items-center justify-center rounded-full mx-auto mb-2 
+                                animate-pulse-slow">
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
                     </div>
                     <h3 class="text-base font-semibold mt-1 text-gray-700">ผู้ใช้ทั้งหมด</h3>
-                    <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ total_users }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 mt-1">{{ total_users }}</h1>
                 </div>
-                <canvas id="userChart" class="mt-2 max-h-28"></canvas>
+                <canvas id="userChart" class="mt-2 max-h-32"></canvas>
                 <div class="legend flex justify-center mt-2 text-xs text-gray-600">
                     <span class="legend-item mr-3 flex items-center">
-                        <span class="w-2 h-2 bg-red-500 inline-block mr-1 rounded-full"></span> นักศึกษา
+                        <span class="w-3 h-3 bg-red-500 inline-block mr-1 rounded-full"></span> นักศึกษา
                     </span>
                     <span class="legend-item flex items-center">
-                        <span class="w-2 h-2 bg-yellow-500 inline-block mr-1 rounded-full"></span> อาจารย์
+                        <span class="w-3 h-3 bg-yellow-500 inline-block mr-1 rounded-full"></span> อาจารย์
                     </span>
                 </div>
             </div>
         
-            <!-- กล่องนัดสอบทั้งหมด - ปรับขนาดลง -->
-            <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 text-center flex flex-col justify-center h-[320px] md:col-span-3">
+            <!-- Appointment Overview Card -->
+            <div class="bg-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 
+                        transform hover:-translate-y-2 text-center flex flex-col justify-center 
+                        h-[320px] md:col-span-3 animate-fade-in-right">
                 <div class="text-center">
-                    <div class="bg-green-100 h-12 w-12 flex items-center justify-center rounded-full mx-auto mb-1">
-                        <i class="fas fa-calendar-check text-green-600"></i>
+                    <div class="bg-green-100 h-14 w-14 flex items-center justify-center rounded-full mx-auto mb-2 
+                                animate-pulse-slow">
+                        <i class="fas fa-calendar-check text-green-600 text-2xl"></i>
                     </div>
                     <h3 class="text-base font-semibold mt-1 text-gray-700">นัดสอบทั้งหมด</h3>
-                    <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ total_appointments }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 mt-1">{{ total_appointments }}</h1>
                 </div>
-                <div class="grid grid-cols-3 gap-1 mt-3">
-                    <div class="p-1 bg-green-50 rounded-md">
+                <div class="grid grid-cols-3 gap-2 mt-4">
+                    <div class="p-2 bg-green-50 rounded-lg transition-colors hover:bg-green-100">
                         <p class="text-xs text-gray-600">ยืนยันแล้ว</p>
-                        <p class="text-base font-bold text-green-600">{{ confirmed_appointments|default:"0" }}</p>
+                        <p class="text-lg font-bold text-green-600">{{ confirmed_appointments }}</p>
                     </div>
-                    <div class="p-1 bg-yellow-50 rounded-md">
+                    <div class="p-2 bg-yellow-50 rounded-lg transition-colors hover:bg-yellow-100">
                         <p class="text-xs text-gray-600">รอยืนยัน</p>
-                        <p class="text-base font-bold text-yellow-600">{{ pending_appointments|default:"0" }}</p>
+                        <p class="text-lg font-bold text-yellow-600">{{ pending_appointments }}</p>
                     </div>
-                    <div class="p-1 bg-red-50 rounded-md">
+                    <div class="p-2 bg-red-50 rounded-lg transition-colors hover:bg-red-100">
                         <p class="text-xs text-gray-600">ยกเลิก</p>
-                        <p class="text-base font-bold text-red-600">{{ cancelled_appointments|default:"0" }}</p>
+                        <p class="text-lg font-bold text-red-600">{{ cancelled_appointments }}</p>
                     </div>
                 </div>
             </div>
             
-            <!-- ช่องว่างด้านขวาเพื่อให้ 2 กล่องอยู่ตรงกลาง -->
             <div class="hidden md:block md:col-span-3"></div>
         
-            <!-- ปฏิทินการนัดหมาย - ขนาดยังคงใหญ่ -->
-            <div class="bg-white p-3 md:p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex flex-col h-[500px] md:col-span-12">
-                <h2 class="text-base font-bold mb-3 text-center text-gray-700 flex items-center justify-center">
-                    <i class="fas fa-calendar-alt text-blue-500 mr-1"></i> ปฏิทินการนัดหมาย
+            <!-- Calendar Section -->
+            <div class="bg-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 
+                        flex flex-col h-[500px] md:col-span-12 animate-fade-in">
+                <h2 class="text-xl font-bold mb-4 text-center text-gray-700 flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-blue-500 mr-2 text-2xl"></i> ปฏิทินการนัดหมาย
                 </h2>
                 <div id="calendar" class="flex-grow w-full overflow-hidden"></div>
             </div>
@@ -67,10 +74,34 @@
     </section>
 </div>
 
+<!-- External Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+<style>
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulseSlow {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    .animate-fade-in-down { animation: fadeInDown 0.7s ease-out; }
+    .animate-fade-in-left { animation: fadeInLeft 0.7s ease-out; }
+    .animate-fade-in-right { animation: fadeInRight 0.7s ease-out; }
+    .animate-pulse-slow { animation: pulseSlow 3s infinite; }
+</style>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -78,12 +109,12 @@
         var totalTeachers = Number("{{ total_teachers|default:0 }}".trim());
     
         if (isNaN(totalStudents) || isNaN(totalTeachers)) {
-            console.error("🚨 ค่าที่ได้รับจาก Django ไม่ถูกต้อง!");
+            console.error("ค่าที่ได้รับจาก Django ไม่ถูกต้อง!");
             return;
         }
     
         if (totalStudents === 0 && totalTeachers === 0) {
-            console.warn("⚠️ ไม่มีข้อมูลผู้ใช้! กราฟจะไม่ถูกแสดง");
+            console.warn("ไม่มีข้อมูลผู้ใช้! กราฟจะไม่ถูกแสดง");
             return;
         }
     
@@ -111,9 +142,14 @@
                         }
                     }
                 },
-                cutout: '65%'
+                cutout: '65%',
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
             }
         });
+        
         var calendarEl = document.getElementById("calendar");
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: "dayGridMonth",
@@ -133,22 +169,24 @@
             eventSources: [
             {
                 events: [
-            {% for appointment in appointments %}
-            {
-                id: '{{ appointment.id }}',
-                title: '{{ appointment.project.topic|default:"ไม่ระบุหัวข้อ" }}',
-                start: '{{ appointment.date|date:"Y-m-d" }}T{{ appointment.time_start|time:"H:i:s" }}',
-                end: '{{ appointment.date|date:"Y-m-d" }}T{{ appointment.time_finish|time:"H:i:s" }}',
-                backgroundColor: '#10B981',  // ใช้สีเดียวกันหมดเพื่อทดสอบ
-                textColor: 'white',
-                borderColor: 'transparent',
-                extendedProps: {
-                    location: '{{ appointment.location|default:"ไม่ระบุ" }}',
-                    advisor: '{% if appointment.project.advisor %}{{ appointment.project.advisor.get_full_name|default:"ไม่ระบุ" }}{% else %}ไม่ระบุ{% endif %}',
-                    status: '{{ appointment.status|default:"pending" }}'
-                }
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
+                {% for appointment in appointments %}
+                {
+                    id: '{{ appointment.id }}',
+                    title: '{{ appointment.project.topic|default:"ไม่ระบุหัวข้อ" }}',
+                    start: '{{ appointment.date|date:"Y-m-d" }}T{{ appointment.time_start|time:"H:i:s" }}',
+                    end: '{{ appointment.date|date:"Y-m-d" }}T{{ appointment.time_finish|time:"H:i:s" }}',
+                    backgroundColor: '#10B981',
+                    textColor: 'white',
+                    borderColor: 'transparent',
+                    extendedProps: {
+                        students: '{% for student in appointment.project.students.all %}{{ student.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}',
+                        committee: '{% for committee in appointment.project.committee.all %}{{ committee.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}',
+                        location: '{{ appointment.location|default:"ไม่ระบุ" }}',
+                        meetingLink: '{{ appointment.meeting_link|default:"" }}',
+                        advisor: '{% if appointment.project.advisor %}{{ appointment.project.advisor.get_full_name|default:"ไม่ระบุ" }}{% else %}ไม่ระบุ{% endif %}'
+                    }
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
                 ]
             }
         ],
@@ -156,16 +194,28 @@
                 var event = info.event;
                 var start = event.start ? event.start.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
                 var end = event.end ? event.end.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
-                var status = event.extendedProps.status === 'accepted' ? 'ยืนยันแล้ว' : 
-                            event.extendedProps.status === 'pending' ? 'รอยืนยัน' : 'ไม่ระบุ';
                 
-                alert(
-                    "📅 หัวข้อ: " + event.title + "\n" +
-                    "⏰ เวลา: " + start + (end ? " - " + end : "") + "\n" +
-                    "📍 สถานที่: " + event.extendedProps.location + "\n" +
-                    "👨‍🏫 อาจารย์ที่ปรึกษา: " + event.extendedProps.advisor + "\n" +
-                    "🔄 สถานะ: " + status
-                );
+                var locationHtml = '';
+                if (event.extendedProps.meetingLink) {
+                    locationHtml += `<strong>การประชุมออนไลน์:</strong> <a href="${event.extendedProps.meetingLink}" target="_blank" class="text-blue-600 hover:underline">คลิกเพื่อเข้าร่วมประชุม</a><br>`;
+                }
+                if (event.extendedProps.location && event.extendedProps.location !== 'ไม่ระบุ') {
+                    locationHtml += `<strong>สถานที่:</strong> ${event.extendedProps.location}`;
+                }
+
+                Swal.fire({
+                    title: 'รายละเอียดการนัดหมาย',
+                    html: 
+                        `<strong>หัวข้อโครงงาน:</strong> ${event.title}<br>` +
+                        `<strong>เวลา:</strong> ${start}${end ? ` - ${end}` : ''}<br>` +
+                        `<strong>นักศึกษา:</strong> ${event.extendedProps.students}<br>` +
+                        `<strong>อาจารย์ที่ปรึกษา:</strong> ${event.extendedProps.advisor}<br>` +
+                        `<strong>กรรมการ:</strong> ${event.extendedProps.committee}<br>` +
+                        `${locationHtml}`,
+                    width: 600,
+                    padding: '2em',
+                    confirmButtonText: 'ปิด'
+                });
             },
             eventTimeFormat: {
                 hour: '2-digit',
@@ -178,9 +228,10 @@
         });
         
         calendar.render();
-        
-        // เพิ่มการตรวจสอบข้อผิดพลาด
         console.log("จำนวนการนัดหมายในปฏิทิน:", calendar.getEvents().length);
     });
 </script>
+
+<!-- SweetAlert2 for nice alerts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .header {
+            background-color: #10B981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .detail-row {
+            margin-bottom: 10px;
+        }
+        .detail-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 120px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #10B981;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>การนัดหมายโครงงานได้รับการอนุมัติแล้ว</h2>
+        </div>
+        <div class="content">
+            <p>เรียนนักศึกษา,</p>
+            
+            <p>การนัดหมายโครงงานของคุณได้รับการอนุมัติจากอาจารย์ทุกท่านแล้ว โดยมีรายละเอียดดังนี้:</p>
+            
+            <div class="detail-row">
+                <span class="detail-label">โครงงาน:</span> {{ project.topic }}
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">วันที่:</span> {{ formatted_date }}
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">เวลา:</span> {{ formatted_time_start }} น. - {{ formatted_time_finish }} น.
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">สถานที่:</span> {{ appointment.location|default:'ยังไม่ระบุ' }}
+            </div>
+            
+            {% if appointment.meeting_link %}
+            <div class="detail-row">
+                <span class="detail-label">ลิงก์ประชุม:</span> <a href="{{ appointment.meeting_link }}">{{ appointment.meeting_link }}</a>
+            </div>
+            {% endif %}
+            
+            <div class="detail-row">
+                <span class="detail-label">อาจารย์ที่เข้าร่วม:</span> 
+                <ul>
+                    {% for teacher in appointment.teachers.all %}
+                    <li>{{ teacher.get_full_name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <p>คุณสามารถเข้าดูรายละเอียดการนัดหมายเพิ่มเติมได้ที่:</p>
+            
+            <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'my_appointments' %}" class="button">ดูการนัดหมาย</a>
+            
+            <p style="margin-top: 30px;">ด้วยความเคารพ,<br>ระบบนัดหมายโครงงาน</p>
+        </div>
+    </div>
+</body>
+</html>

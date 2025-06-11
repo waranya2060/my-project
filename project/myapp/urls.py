@@ -3,15 +3,14 @@ from .views import *
 
 urlpatterns = [
     path('', login_view, name='login'),
-    path('login/', login_view, name='login'),
+    path('login/', login_view, name='login'),  # Add this line back
     path('logout/', logout_view, name='logout'),
 
  # Dashboard
     path('student/dashboard/', student_dashboard, name='student_dashboard'),
     path('teacher/dashboard/', teacher_dashboard, name='teacher_dashboard'),
     path('manager/dashboard/', manager_dashboard, name='manager_dashboard'),
-    path('manager/', manager_home, name='manager_home'),
-
+   
   # ตรวจสอบเวลาว่างของอาจารย์ (แยกตาม role)
     path('student/check-time/', check_time, name='student_check_time'),
     path('teacher/check-time/', check_time, name='teacher_check_time'),
@@ -19,13 +18,14 @@ urlpatterns = [
     path("my-appointments/", my_appointments, name="my_appointments"),
       # นัดหมาย (แยกตาม role)
     path('book-appointment/', book_appointment, name='book_appointment'),
-
+    path('teacher/connect-calendar/', connect_google_calendar, name='connect_google_calendar'),
+    path('teacher/calendar-callback/', google_calendar_callback, name='google_calendar_callback'),
     path('appointments/', teacher_appointments, name='teacher_appointments'),
     path('appointments/accept/<int:appointment_id>/', accept_appointment, name='accept_appointment'),
     path('appointments/reject/<int:appointment_id>/', reject_appointment, name='reject_appointment'),
-    path('manager/appointment/', manager_appointment, name='manager_appointment'),
-
+    path('projects/<int:project_id>/add-member/', add_project_member, name='add_project_member'),
     path('student/upload-project/', upload_project, name='upload_project'),
+    path('search-students/', search_students, name='search_students'),
     path('student/edit-project/<int:project_id>/', edit_project, name='edit_project'),
     path('delete_project/<int:project_id>/', delete_project, name='delete_project'),
     path('student/my-projects/', my_projects, name='my_projects'),
