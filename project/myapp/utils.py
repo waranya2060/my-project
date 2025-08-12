@@ -7,50 +7,13 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 import os
 import pickle
+from myapp.models import Member
 
 def get_role_from_email(email):
-    if not email:
+    try:
+        return Member.objects.get(email=email.lower().strip()).role
+    except Member.DoesNotExist:
         return None
-
-    email = email.lower().strip()
-
-    # อีเมลอาจารย์
-    teacher_emails = [
-        'wiw12waranya@gmail.com', 
-        'win12waranya@gmail.com',
-        # เพิ่มอีเมลอาจารย์อื่นๆ
-    ]
-
-    # อีเมลผู้ดูแล
-    manager_emails = [
-        'waranyaph30@gmail.com',
-        # เพิ่มอีเมลผู้ดูแลอื่นๆ
-    ]
-
-    # รูปแบบอีเมลนักศึกษา
-    student_patterns = [
-        r'^[a-z]+\.[a-z]{2,3}\.\d{2}@ubu\.ac\.th$',
-       
-    ]
-
-    # ตรวจสอบอีเมลอาจารย์
-    if email in teacher_emails:
-        return 2
-
-    # ตรวจสอบอีเมลผู้ดูแล
-    if email in manager_emails:
-        return 3
-
-    # ตรวจสอบอีเมลนักศึกษา
-    if '@ubu.ac.th' in email:
-        for pattern in student_patterns:
-            if re.match(pattern, email):
-                return 1
-        return 3  # Default เป็นผู้ดูแลระบบ
-
-    return None
-
-
 
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -167,3 +130,10 @@ def create_google_calendar_event(appointment, teacher_email):
         print(f"เกิดข้อผิดพลาดในการสร้างกิจกรรม Google Calendar: {e}")
         return None
 
+def get_token_file_path(user_email):
+    hashed_email = hashlib.md5(user_email.encode()).hexdigest()
+    return os.path.join("tokens", f"token_{hashed_email}.pickle")
+
+def has_google_token(user):
+    token_path = get_token_file_path(user.email)
+    return os.path.exists(token_path)

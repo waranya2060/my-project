@@ -1,4 +1,4 @@
-{% extends 'base2.html' %} 
+{% extends 'base.html' %} 
 {% block title %}ให้คะแนนโครงงาน{% endblock %}
 {% block content %}
 <style>
@@ -87,11 +87,25 @@
                 </div>
                 
                 <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-1">คะแนน (0-50):</label>
-                    <input type="number" name="score" min="0" max="50" 
+                    <label class="block text-gray-700 font-medium mb-1">คะแนน (0-100):</label>
+                    <input type="number" name="score" min="0" max="100" 
                         class="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
-                
+                <!-- ✅ เพิ่มตรงนี้ -->
+<div class="mb-4">
+    <label class="block text-gray-700 font-medium mb-1">เกรด:</label>
+    <select name="grade" class="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500">
+        <option value="">-- เลือกเกรด --</option>
+        <option value="A">A</option>
+        <option value="B+">B+</option>
+        <option value="B">B</option>
+        <option value="C+">C+</option>
+        <option value="C">C</option>
+        <option value="D+">D+</option>
+        <option value="D">D</option>
+        <option value="F">F</option>
+    </select>
+</div>
                 <div class="mb-4">
                     <label class="block text-gray-700 font-medium mb-1">ความคิดเห็น:</label>
                     <textarea name="comment" rows="3" class="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500" required></textarea>

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}นำเข้าสมาชิกจาก Excel{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded shadow">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">นำเข้ารายชื่อสมาชิกจาก Excel</h2>
+
+    
+
+    <form action="" method="post" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label for="excel_file" class="block text-gray-700 font-medium mb-1">เลือกไฟล์ Excel</label>
+            <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" required class="border border-gray-300 px-3 py-2 rounded w-full">
+        </div>
+
+        <div class="text-gray-600 text-sm">
+            ไฟล์ต้องมีคอลัมน์ <code>email</code> เท่านั้น 
+        </div>
+
+        <div>
+            <label for="selected_role" class="block text-gray-700 font-medium mb-1">กำหนดบทบาทสำหรับสมาชิกทั้งหมดในไฟล์นี้</label>
+            <select name="selected_role" id="selected_role" required class="border border-gray-300 px-3 py-2 rounded w-full">
+                <option value="">-- เลือกบทบาท --</option>
+                <option value="student">นักศึกษา</option>
+                <option value="teacher">อาจารย์</option>
+                <option value="manager">อาจารย์ประจำวิชา</option>
+            </select>
+        </div>
+
+        <div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">นำเข้า</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

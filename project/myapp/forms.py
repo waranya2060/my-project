@@ -156,10 +156,15 @@ class AvailableTimeForm(forms.ModelForm):
 class ScoreForm(forms.ModelForm):
     class Meta:
         model = Score
-        fields = ['project', 'student', 'score', 'comment']
+        fields = ['project', 'student', 'score', 'comment','grade']
         widgets = {
             'score': forms.NumberInput(attrs={'min': 0, 'max': 100}),
             'comment': forms.Textarea(attrs={'rows': 3}),
+            'grade': forms.Select(choices=[('', '-- เกรดที่ต้องการให้ --'),
+                                           ('A', 'A'), ('B+', 'B+'), ('B', 'B'),
+                                           ('C+', 'C+'), ('C', 'C'),
+                                           ('D+', 'D+'), ('D', 'D'),
+                                           ('F', 'F')])
         }
 
     def __init__(self, *args, **kwargs):

@@ -1,134 +1,180 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-3 py-5 bg-white">
-    <!-- ส่วนหัวหน้า -->
-    <div class="mb-5 flex items-center border-b border-gray-200 pb-3">
-        <h2 class="text-2xl font-mono font-bold text-gray-800">
-            <span class="text-green-500">/</span> โครงงานของฉัน
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-6 flex items-center gap-3 border-b border-gray-200 pb-4">
+        <h2 class="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
+            <span class="text-green-600">/</span> โครงงานของฉัน
         </h2>
         <div class="ml-auto">
-            <a href="{% url 'upload_project' %}" class="text-xs bg-gray-800 text-white px-4 py-2 rounded-md font-mono flex items-center hover:bg-gray-700 transition-colors">
-                <i class="fas fa-plus mr-2"></i> สร้างโครงงานใหม่
+            <a href="{% url 'upload_project' %}"
+               class="inline-flex items-center gap-2 rounded-lg bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                <i class="fas fa-plus text-xs"></i>
+                สร้างโครงงานใหม่
             </a>
         </div>
     </div>
 
-    <!-- รายการโครงงาน -->
     {% if projects %}
-        <div class="space-y-4">
+        <div class="space-y-5">
             {% for project in projects %}
-                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                    <!-- ส่วนหัวโครงงาน -->
-                    <div class="p-4 pb-3 bg-gray-50">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-lg font-mono font-semibold text-gray-800">
-                                {{ project.topic }}
-                            </h3>
-                            <code class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-mono">
-                                {{ project.year }}
-                            </code>
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <!-- Card header -->
+                    <div class="p-5 md:p-6 border-b border-gray-100 bg-gray-50/60">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-lg md:text-xl font-semibold text-gray-900 leading-snug">
+                                        {{ project.topic }}
+                                    </h3>
+                                    <span class="inline-flex items-center rounded-full bg-gray-800 text-white px-2.5 py-0.5 text-xs font-medium">
+                                        ปี {{ project.year }}
+                                    </span>
+                                </div>
+                                <div class="mt-2 text-sm text-gray-600">
+                                    <span class="font-medium text-gray-700">อาจารย์ที่ปรึกษา:</span>
+                                    <span class="text-gray-800">{{ project.advisor.first_name }} {{ project.advisor.last_name }}</span>
+                                </div>
+                            </div>
+                            <!-- Actions (duplicate for quick access on large screens) -->
+                            <div class="hidden md:flex items-center gap-3">
+                                <a href="{% url 'edit_project' project_id=project.id %}"
+                                   class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-edit text-xs"></i> แก้ไข
+                                </a>
+                                <form action="{% url 'delete_project' project.id %}" method="post" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่ต้องการลบโครงงานนี้?')">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">
+                                        <i class="fas fa-trash-alt text-xs"></i> ลบ
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- รายละเอียดโครงงาน -->
-                    <div class="px-4 py-3 border-t border-gray-200">
-                        <div class="grid grid-cols-12 gap-y-2 text-sm">
-                            <div class="col-span-3 sm:col-span-2 text-gray-600 font-semibold">อาจารย์ที่ปรึกษา</div>
-                            <div class="col-span-9 sm:col-span-10 text-gray-800">{{ project.advisor.first_name }} {{ project.advisor.last_name }}</div>
-                            
-                            <div class="col-span-3 sm:col-span-2 text-gray-600 font-semibold">คณะกรรมการ</div>
-                            <div class="col-span-9 sm:col-span-10 text-gray-800">
+                    <!-- Card body -->
+                    <div class="p-5 md:p-6 space-y-6">
+                        <!-- Committees -->
+                        <section>
+                            <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">คณะกรรมการ</div>
+                            <div class="flex flex-wrap gap-2">
                                 {% for committee_member in project.committee.all %}
-                                    {{ committee_member.first_name }} {{ committee_member.last_name }}{% if not forloop.last %}, {% endif %}
+                                    <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-800">
+                                        <i class="fas fa-user-tie mr-1 text-[10px]"></i>
+                                        {{ committee_member.first_name }} {{ committee_member.last_name }}
+                                    </span>
                                 {% empty %}
-                                    <span class="italic text-gray-400">ไม่มี</span>
+                                    <span class="text-sm italic text-gray-400">ไม่มี</span>
                                 {% endfor %}
                             </div>
-                        </div>
-                    </div>
+                        </section>
 
-                    <!-- สมาชิกโครงงาน -->
-                    <div class="p-4 border-t border-gray-200">
-                        <div class="text-xs text-gray-500 font-mono mb-3 uppercase tracking-wider">สมาชิกในโครงงาน</div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <!-- แสดงตัวผู้ใช้ -->
-                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                                <div class="w-8 text-center text-indigo-500">
-                                    <i class="fas fa-user-circle text-xl"></i>
-                                </div>
-                                <div class="ml-3">
-                                    <span class="font-medium text-sm text-gray-800">{{ request.user.first_name }} {{ request.user.last_name }}</span>
-                                    <span class="ml-2 text-xs text-indigo-500 font-mono">[คุณ]</span>
-                                    {% if request.user.student.student_id %}
-                                        <div class="text-gray-500 text-xs mt-1">{{ request.user.student.student_id }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <!-- แสดงนักศึกษาร่วมโครงงานคนอื่นๆ -->
-                            {% for student in project.students.all %}
-                                {% if student.id != request.user.student.id %}
-                                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                                        <div class="w-8 text-center text-gray-400">
-                                            <i class="fas fa-user text-xl"></i>
-                                        </div>
-                                        <div class="ml-3">
-                                            <span class="font-medium text-sm text-gray-800">{{ student.first_name }} {{ student.last_name }}</span>
-                                            {% if student.student_id %}
-                                                <div class="text-gray-500 text-xs mt-1">{{ student.student_id }}</div>
-                                            {% endif %}
-                                        </div>
+                        <!-- Members -->
+                        <section>
+                            <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">สมาชิกในโครงงาน</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- You -->
+                                <div class="flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+                                    <div class="w-8 text-center text-indigo-500">
+                                        <i class="fas fa-user-circle text-xl"></i>
                                     </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ request.user.first_name }} {{ request.user.last_name }}
+                                            <span class="ml-2 text-[11px] text-indigo-600 font-semibold align-middle">[คุณ]</span>
+                                        </div>
+                                        {% if request.user.student.student_id %}
+                                            <div class="text-xs text-gray-500 mt-0.5">{{ request.user.student.student_id }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Others -->
+                                {% for student in project.students.all %}
+                                    {% if student.id != request.user.student.id %}
+                                        <div class="flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+                                            <div class="w-8 text-center text-gray-400">
+                                                <i class="fas fa-user text-xl"></i>
+                                            </div>
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ student.first_name }} {{ student.last_name }}
+                                                </div>
+                                                {% if student.student_id %}
+                                                    <div class="text-xs text-gray-500 mt-0.5">{{ student.student_id }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </section>
+
+                        <!-- Files -->
+                        {% with files=project.files.all %}
+                        {% if files %}
+                            <section>
+                                <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">ไฟล์/ลิงก์</div>
+                                <ul class="space-y-2">
+                                    {% for file in files %}
+                                        <li class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                                            <div class="flex items-center min-w-0">
+                                                {% if file.file %}
+                                                    <div class="w-6 text-center text-gray-500 mr-2">
+                                                        <i class="fas fa-file-alt"></i>
+                                                    </div>
+                                                    <a href="{{ file.file.url }}"
+                                                       class="truncate text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                       target="_blank" title="{{ file.file.name }}">
+                                                        {{ file.file.name|slice:"14:" }}
+                                                    </a>
+                                                {% endif %}
+                                                {% if file.url %}
+                                                    <div class="w-6 text-center text-gray-500 mr-2">
+                                                        <i class="fas fa-link"></i>
+                                                    </div>
+                                                    <a href="{{ file.url }}"
+                                                       class="truncate text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                       target="_blank" title="{{ file.url }}">
+                                                        {{ file.url|truncatechars:60 }}
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                {% if file.file %}
+                                                    <a href="{{ file.file.url }}" target="_blank"
+                                                       class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50">
+                                                        <i class="fas fa-external-link-alt text-[10px]"></i> เปิด
+                                                    </a>
+                                                {% endif %}
+                                                {% if file.url %}
+                                                    <a href="{{ file.url }}" target="_blank"
+                                                       class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50">
+                                                        <i class="fas fa-external-link-alt text-[10px]"></i> เปิดลิงก์
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </section>
+                        {% endif %}
+                        {% endwith %}
                     </div>
 
-                    <!-- ไฟล์ที่อัปโหลด -->
-                    {% if project.files.all %}
-                        <div class="p-4 border-t border-gray-200 bg-gray-50">
-                            <div class="text-xs text-gray-500 font-mono mb-3 uppercase tracking-wider">ไฟล์</div>
-                            <ul class="space-y-2">
-                                {% for file in project.files.all %}
-                                    <li class="text-sm">
-                                        <!-- แสดงไฟล์ที่อัปโหลด -->
-                                        {% if file.file %}
-                                            <a href="{{ file.file.url }}" class="text-indigo-600 hover:text-indigo-800 hover:underline font-mono flex items-center" target="_blank">
-                                                <div class="w-6 text-center text-gray-500 mr-2">
-                                                    <i class="fas fa-file-code"></i>
-                                                </div>
-                                                <span class="truncate max-w-xs">{{ file.file.name|slice:"14:" }}</span>
-                                            </a>
-                                        {% endif %}
-
-                                        <!-- แสดงลิงก์ -->
-                                        {% if file.url %}
-                                            <a href="{{ file.url }}" class="text-indigo-600 hover:text-indigo-800 hover:underline font-mono flex items-center mt-2" target="_blank">
-                                                <div class="w-6 text-center text-gray-500 mr-2">
-                                                    <i class="fas fa-link"></i>
-                                                </div>
-                                                <span class="truncate max-w-xs">{{ file.url|truncatechars:40 }}</span>
-                                            </a>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    {% endif %}
-
-                    <!-- ปุ่มการดำเนินการ -->
-                    <div class="flex flex-wrap gap-4 p-4 border-t border-gray-200">
-                        <!-- ปุ่มแก้ไข -->
-                        <a href="{% url 'edit_project' project_id=project.id %}" class="inline-flex items-center text-sm text-gray-600 hover:text-green-600 transition-colors">
-                            <i class="fas fa-edit mr-2"></i> แก้ไข
+                    <!-- Footer actions (mobile first) -->
+                    <div class="flex flex-wrap gap-3 p-4 md:p-5 border-t border-gray-100 md:hidden">
+                        <a href="{% url 'edit_project' project_id=project.id %}"
+                           class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                            <i class="fas fa-edit text-xs"></i> แก้ไข
                         </a>
-
-                        <!-- ปุ่มลบ -->
-                        <form action="{% url 'delete_project' project.id %}" method="post" class="inline">
+                        <form action="{% url 'delete_project' project.id %}" method="post" class="inline"
+                              onsubmit="return confirm('คุณแน่ใจหรือไม่ที่ต้องการลบโครงงานนี้?')">
                             {% csrf_token %}
-                            <button type="submit" class="inline-flex items-center text-sm text-gray-600 hover:text-red-600 transition-colors" onclick="return confirm('คุณแน่ใจหรือไม่ที่ต้องการลบโครงงานนี้?')">
-                                <i class="fas fa-trash-alt mr-2"></i> ลบ
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+                                <i class="fas fa-trash-alt text-xs"></i> ลบ
                             </button>
                         </form>
                     </div>
@@ -136,13 +182,17 @@
             {% endfor %}
         </div>
     {% else %}
-        <!-- ข้อความเมื่อไม่มีโครงงาน -->
-        <div class="bg-gray-50 border border-dashed border-gray-300 p-6 text-center rounded-lg">
-            <pre class="text-gray-600 font-mono text-sm mb-5 bg-white p-4 rounded-lg">ไม่พบโครงงานในบัญชีของคุณ
-
-
-            </pre>
-      
+        <!-- Empty state -->
+        <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
+            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow">
+                <i class="fas fa-folder-open text-gray-400"></i>
+            </div>
+            <h4 class="text-lg font-semibold text-gray-800">ไม่พบโครงงานในบัญชีของคุณ</h4>
+            <p class="mt-1 text-sm text-gray-600">เริ่มต้นด้วยการสร้างโครงงานใหม่ได้เลย</p>
+            <a href="{% url 'upload_project' %}"
+               class="mt-4 inline-flex items-center gap-2 rounded-lg bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800">
+                <i class="fas fa-plus text-xs"></i> สร้างโครงงานใหม่
+            </a>
         </div>
     {% endif %}
 </div>

@@ -1,7 +1,7 @@
 from django.utils.cache import patch_cache_control
 from django.shortcuts import redirect
-from django.urls import reverse
-
+from django.urls import resolve
+import logging
 
 class NoCacheMiddleware:
     def __init__(self, get_response):
@@ -12,26 +12,38 @@ class NoCacheMiddleware:
         patch_cache_control(response, no_cache=True, no_store=True, must_revalidate=True)
         return response
 
+
+logger = logging.getLogger(__name__)
+
 class LoginRequiredMiddleware:
-    """
-    Middleware บังคับให้ผู้ใช้ล็อกอินก่อนเข้าถึงทุกหน้า ยกเว้นหน้าล็อกอินและ OAuth URL
-    """
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # รายการ URL ที่ยกเว้น
-        excluded_paths = [
-            reverse('login'),  # หน้า Login
-            reverse('logout'),  # หน้า Logout
-            '/accounts/google/login/',  # Google OAuth Login
-            '/accounts/google/login/callback/',  # Callback หลังจากยืนยัน Google OAuth
-            '/accounts/login/',  # allauth login page
+        allowed_names = [
+            'login', 'logout', 'redirect_after_login',
+            'google_calendar_callback',
         ]
-        
-        # ตรวจสอบว่า URL ปัจจุบันอยู่ใน excluded_paths หรือไม่
-        if not request.user.is_authenticated and not any(request.path.startswith(path) for path in excluded_paths):
-            return redirect(reverse('login'))  # Redirect ไปหน้า login
+        allowed_paths = [
+            '/favicon.ico',
+            '/accounts/google/login/',
+            '/accounts/google/login/callback/',
+            '/accounts/login/',
+            '/favicon.ico',
+        ]
 
-        response = self.get_response(request)
-        return response
+        try:
+            match = resolve(request.path)
+            print(f"[MIDDLEWARE] path: {request.path} → resolved to: {match.url_name}")
+            if match.url_name in allowed_names or request.path in allowed_paths:
+                return self.get_response(request)
+        except Exception as e:
+            print(f"[MIDDLEWARE] Cannot resolve path: {request.path} — {e}")
+
+        print(f"[MIDDLEWARE] User: {request.user} | Auth: {request.user.is_authenticated}")
+
+        if not request.user.is_authenticated:
+            print(f"[MIDDLEWARE] ❌ Unauthenticated — redirecting to login from {request.path}")
+            return redirect('login')
+
+        return self.get_response(request)

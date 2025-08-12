@@ -1,95 +1,278 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <title>{% block title %}ระบบนัดหมายสอบโครงงาน{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}ระบบนัดหมายสอบโครงงาน{% endblock %}</title>
 
-    <header class="bg-[#19335A] shadow-md">
-        <nav class="mx-auto flex items-center justify-between p-6 lg:px-8" aria-label="Global">
-            <div class="flex lg:flex-1">
-                <a href="#" class="-m-1.5 p-1.5">
-                    <span class="sr-only">ระบบนัดหมายสอบโครงงาน</span>
-                    <h1 class="text-white text-xl font-semibold">ระบบนัดหมายสอบโครงงาน</h1>
-                </a>
+  <!-- libs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    html, body { height: 100%; } /* ทำให้ min-h-screen ทำงานเต็มจอ */
+    .font-sarabun{font-family:'Sarabun',sans-serif}
+    .font-kanit{font-family:'Kanit',sans-serif}
+    body{overflow-x:hidden}
+    /* base2 (teacher) styles */
+    .nav-item{position:relative;transition:all .3s ease;z-index:1}
+    .nav-item::after{content:'';position:absolute;bottom:0;left:50%;width:0;height:2px;background:#8FCFEB;transition:all .3s ease;transform:translateX(-50%)}
+    .nav-item:hover::after{width:80%}
+    .dropdown-menu{transform:translateY(10px);opacity:0;visibility:hidden;transition:all .3s ease;z-index:50;box-shadow:0 10px 25px rgba(0,0,0,.1);position:absolute}
+    .dropdown-menu.show{transform:translateY(0);opacity:1;visibility:visible}
+    .relative{position:relative;overflow:visible}
+  </style>
+  {% block head_extra %}{% endblock %}
+</head>
+
+{% with urlname=request.resolver_match.url_name %}
+<body class="
+  {% if request.user.is_authenticated and request.user.role == 'manager' %}
+    {% if urlname == 'teacher_dashboard' or urlname == 'available_time' or urlname == 'teacher_check_time' or urlname == 'teacher_appointments' or urlname == 'assign_score' or urlname == 'teacher_news' %}
+      font-sarabun
+    {% else %}
+      font-kanit
+    {% endif %}
+  {% elif request.user.is_authenticated and request.user.role == 'teacher' %}
+    font-sarabun
+  {% else %}
+    font-sarabun
+  {% endif %}
+  bg-gray-50 min-h-screen flex flex-col">
+
+  {# ---------------- Headers ตาม role + URL ---------------- #}
+  {% if request.user.is_authenticated and request.user.role == 'manager' %}
+    {% if urlname == 'teacher_dashboard' or urlname == 'available_time' or urlname == 'teacher_check_time' or urlname == 'teacher_appointments' or urlname == 'assign_score' or urlname == 'teacher_news' %}
+      {# === Manager ที่อยู่หน้าอาจารย์ -> ใช้ Header อาจารย์ (base2) === #}
+      <header class="bg-gradient-to-r from-[#19335A] to-[#2A4A7F] text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+          <h1 class="text-xl font-bold">ระบบนัดหมายสอบโครงงาน</h1>
+          <nav class="flex items-center space-x-6">
+            <a href="{% url 'teacher_dashboard' %}" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md">หน้าแรก</a>
+
+            <div class="relative">
+              <button id="time-management-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center">
+                การจัดการเวลา <i class="fa-solid fa-caret-down ml-1"></i>
+              </button>
+              <div id="time-management" class="dropdown-menu absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl hidden">
+                <div class="py-1">
+                  <a href="{% url 'available_time' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">ลงเวลาว่าง</a>
+                  <a href="{% url 'teacher_check_time' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">ตรวจสอบเวลาว่าง</a>
+                  <a href="{% url 'teacher_appointments' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">การนัด</a>
+                </div>
+              </div>
             </div>
-     <!-- เมนูหลักที่อยู่ด้านขวา -->
-     <div class="flex space-x-8 items-center">
-        <a href="{% url 'student_dashboard' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">หน้าแรก</a>
-        <a href="{% url 'my_appointments' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">การนัด</a>
-        <a href="{% url 'student_check_time' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">ตรวจสอบเวลาว่าง</a>
-        <a href="{% url 'my_point' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB] transition-colors duration-200">คะแนนของฉัน</a>
-       
-        <!-- Dropdown for Upload Project -->
-        <div class="relative">
-            <button id="upload-project-menu-button" class="flex items-center text-white text-sm font-medium hover:text-[#8FCFEB] focus:outline-none">
-                โครงงาน
-                <i class="fas fa-caret-down ml-1"></i>
+
+            <div class="relative">
+              <button id="appointments-scoring-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center">
+                แจ้งข่าวและให้คะแนน <i class="fa-solid fa-caret-down ml-1"></i>
+              </button>
+              <div id="appointments-scoring" class="dropdown-menu absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl hidden">
+                <div class="py-1">
+                  <a href="{% url 'assign_score' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">ให้คะแนนโครงงาน</a>
+                  <a href="{% url 'teacher_news' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">แจ้งข่าวสาร</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="relative">
+              <button id="user-profile-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center">
+                <i class="fas fa-user-circle text-sm mr-2"></i>
+                {{ request.user.get_full_name|default:request.user.email }}
+                <i class="fa-solid fa-caret-down ml-1"></i>
+              </button>
+              <div id="user-profile-menu" class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl hidden">
+                <div class="py-1">
+                  <a href="{% url 'manager_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">
+                    <i class="fas fa-right-to-bracket mr-2"></i> เข้าสู่ระบบอาจารย์ประจำรายวิชา
+                  </a>
+                  <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">
+                    <i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ
+                  </a>
+                </div>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </header>
+    {% else %}
+      {# === Manager หน้า Manager (base3 header) === #}
+      
+    {% endif %}
+
+  {% elif request.user.is_authenticated and request.user.role == 'teacher' %}
+    {# === Teacher ปกติ (base2 header) === #}
+    <header class="bg-gradient-to-r from-[#19335A] to-[#2A4A7F] text-white py-4 shadow-md">
+      <div class="container mx-auto px-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold">ระบบนัดหมายสอบโครงงาน</h1>
+        <nav class="flex items-center space-x-6">
+          <a href="{% url 'teacher_dashboard' %}" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md">หน้าแรก</a>
+
+          <div class="relative">
+            <button id="time-management-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center">
+              การจัดการเวลา <i class="fa-solid fa-caret-down ml-1"></i>
+            </button>
+            <div id="time-management" class="dropdown-menu absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl hidden">
+              <div class="py-1">
+                <a href="{% url 'available_time' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">ลงเวลาว่าง</a>
+                <a href="{% url 'teacher_check_time' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">ตรวจสอบเวลาว่าง</a>
+                <a href="{% url 'teacher_appointments' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">การนัด</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative">
+            <button id="appointments-scoring-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center">
+              แจ้งข่าวและให้คะแนน <i class="fa-solid fa-caret-down ml-1"></i>
+            </button>
+            <div id="appointments-scoring" class="dropdown-menu absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl hidden">
+              <div class="py-1">
+                <a href="{% url 'assign_score' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">ให้คะแนนโครงงาน</a>
+                <a href="{% url 'teacher_news' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">แจ้งข่าวสาร</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative">
+            <button id="user-profile-button" class="nav-item hover:text-[#8FCFEB] px-4 py-2 rounded-md flex items-center">
+              <i class="fas fa-user-circle text-sm mr-2"></i>
+              {{ request.user.get_full_name|default:request.user.email }}
+              <i class="fa-solid fa-caret-down ml-1"></i>
+            </button>
+            <div id="user-profile-menu" class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl hidden">
+              <div class="py-1">
+                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md mx-1">
+                  <i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ
+                </a>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+  {% else %}
+    {# === Student (base เดิม) === #}
+    <header class="bg-[#19335A] shadow-md">
+      <nav class="mx-auto flex items-center justify-between p-6 lg:px-8">
+        <h1 class="text-white text-xl font-semibold">ระบบนัดหมายสอบโครงงาน</h1>
+        {% if request.user.is_authenticated %}
+        <div class="flex space-x-8 items-center">
+          <a href="{% url 'student_dashboard' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB]">หน้าแรก</a>
+          <a href="{% url 'my_appointments' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB]">การนัด</a>
+          <a href="{% url 'student_check_time' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB]">ตรวจสอบเวลาว่าง</a>
+          <a href="{% url 'my_point' %}" class="text-white text-sm font-medium hover:text-[#8FCFEB]">คะแนนของฉัน</a>
+          <div class="relative">
+            <button id="upload-project-menu-button" class="flex items-center text-white text-sm font-medium hover:text-[#8FCFEB]">
+              โครงงาน <i class="fas fa-caret-down ml-1"></i>
             </button>
             <div id="upload-project-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                <a href="{% url 'upload_project' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">อัพโหลดโครงงาน</a>
-                <a href="{% url 'my_projects' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">โครงงานของฉัน</a>
+              <a href="{% url 'upload_project' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">อัพโหลดโครงงาน</a>
+              <a href="{% url 'my_projects' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">โครงงานของฉัน</a>
             </div>
-        </div>
-
-        <!-- User dropdown menu ไม่มีไอคอน -->
-        <div class="relative">
-            <button id="user-menu-button" class="flex items-center text-white text-sm font-medium hover:text-[#8FCFEB] focus:outline-none">
-                <span>{{ request.user.first_name }} {{ request.user.last_name }}</span>
-                <i class="fas fa-caret-down ml-1"></i>
+          </div>
+          <div class="relative">
+            <button id="user-menu-button" class="flex items-center text-white text-sm font-medium hover:text-[#8FCFEB]">
+              <span>{{ request.user.first_name }} {{ request.user.last_name }}</span>
+              <i class="fas fa-caret-down ml-1"></i>
             </button>
             <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">แก้ไขข้อมูลส่วนตัว</a>
-                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">ออกจากระบบ</a>
+              <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">แก้ไขข้อมูลส่วนตัว</a>
+              <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:text-[#8FCFEB]">ออกจากระบบ</a>
             </div>
+          </div>
         </div>
-        </nav>
+        {% endif %}
+      </nav>
     </header>
-    
-    <!-- Main Content -->
-    <main class="container mx-auto py-6">
-        {% block content %}
-        {% endblock %}
+  {% endif %}
+
+  {# ---------------- Shell หลัก: sidebar เฉพาะ Manager ที่ “ไม่ใช่” หน้าอาจารย์ ---------------- #}
+  <div class="flex flex-1">
+    {% if request.user.is_authenticated and request.user.role == 'manager' %}
+      {% if not urlname == 'teacher_dashboard' and not urlname == 'available_time' and not urlname == 'teacher_check_time' and not urlname == 'teacher_appointments' and not urlname == 'assign_score' and not urlname == 'teacher_news' %}
+        <!-- Sidebar base3 -->
+        <aside class="w-64 bg-gradient-to-b from-[#19335A] to-[#2A4A80] text-white flex-shrink-0 flex flex-col shadow-xl">
+          <div class="p-5 border-b border-[#2A4A80]">
+            <h2 class="text-lg font-bold text-center">ระบบนัดหมายสอบโครงงาน</h2>
+          </div>
+          <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-2 px-2">
+              <li><a href="{% url 'manager_dashboard' %}" class="flex items-center text-white hover:bg-blue-600 py-2.5 px-4 rounded-lg"><i class="fa-solid fa-house mr-3 text-blue-300"></i>หน้าแรก</a></li>
+              <li><a href="{% url 'all_projects' %}" class="flex items-center text-white hover:bg-blue-600 py-2.5 px-4 rounded-lg"><i class="fa-solid fa-file-lines mr-3 text-blue-300"></i>โครงงานของนักศึกษา</a></li>
+              <li><a href="{% url 'all_student_scores' %}" class="flex items-center text-white hover:bg-blue-600 py-2.5 px-4 rounded-lg"><i class="fa-solid fa-chart-column mr-3 text-blue-300"></i>คะแนนโครงงาน</a></li>
+              <li><a href="{% url 'import_members' %}" class="flex items-center text-white hover:bg-blue-600 py-2.5 px-4 rounded-lg"><i class="fa-solid fa-user-plus mr-3 text-blue-300"></i>เพิ่มสมาชิก</a></li>
+            </ul>
+          </nav>
+          <div class="p-4 border-t border-[#3A5A90] bg-[#152A4D]">
+            <div class="flex justify-between space-x-2">
+              <a href="{% url 'logout' %}" class="flex items-center text-white hover:bg-red-600 py-2 px-3 rounded-lg text-sm"><i class="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</a>
+              <a href="{% url 'teacher_dashboard' %}" class="flex items-center text-white hover:bg-blue-600 py-2 px-3 rounded-lg text-sm"><i class="fa-solid fa-chalkboard-user mr-2"></i> หน้าอาจารย์</a>
+            </div>
+          </div>
+        </aside>
+      {% endif %}
+    {% endif %}
+
+    <!-- block content ที่เดียวเท่านั้น -->
+    <main class="
+      {% if request.user.is_authenticated and request.user.role == 'manager' %}
+        {% if urlname == 'teacher_dashboard' or urlname == 'available_time' or urlname == 'teacher_check_time' or urlname == 'teacher_appointments' or urlname == 'assign_score' or urlname == 'teacher_news' %}
+          container mx-auto py-6 px-4
+        {% else %}
+          flex-1 p-6
+        {% endif %}
+      {% elif request.user.is_authenticated and request.user.role == 'teacher' %}
+        container mx-auto py-6 px-4
+      {% else %}
+        container mx-auto py-6
+      {% endif %}
+    ">
+      {% block content %}{% endblock %}
     </main>
+  </div>
 
-    <!-- Script for Dropdown Menus -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const userMenuButton = document.getElementById('user-menu-button');
-            const userMenu = document.getElementById('user-menu');
-            const uploadProjectButton = document.getElementById('upload-project-menu-button');
-            const uploadProjectMenu = document.getElementById('upload-project-menu');
+  <!-- Footer -->
+  <footer class="bg-[#19335A] text-white text-center py-3 text-sm mt-auto">
+    &copy; 2025 ระบบนัดหมายสอบโครงงาน
+  </footer>
 
-            function closeAllMenus() {
-                userMenu.classList.add('hidden');
-                uploadProjectMenu.classList.add('hidden');
-            }
+  <!-- Scripts: เมนู/ดรอปดาวน์ (teacher & student) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // student
+      const userMenuBtn = document.getElementById('user-menu-button');
+      const userMenu = document.getElementById('user-menu');
+      const uploadBtn = document.getElementById('upload-project-menu-button');
+      const uploadMenu = document.getElementById('upload-project-menu');
+      function closeStudent(){ if(userMenu) userMenu.classList.add('hidden'); if(uploadMenu) uploadMenu.classList.add('hidden'); }
+      if(userMenuBtn) userMenuBtn.addEventListener('click', e=>{ closeStudent(); userMenu.classList.toggle('hidden'); e.stopPropagation(); });
+      if(uploadBtn) uploadBtn.addEventListener('click', e=>{ closeStudent(); uploadMenu.classList.toggle('hidden'); e.stopPropagation(); });
+      document.addEventListener('click', closeStudent);
 
-            userMenuButton.addEventListener('click', function(event) {
-                closeAllMenus();
-                userMenu.classList.toggle('hidden');
-                event.stopPropagation();
-            });
+      // teacher
+      const t1 = document.getElementById('time-management-button');
+      const m1 = document.getElementById('time-management');
+      const t2 = document.getElementById('appointments-scoring-button');
+      const m2 = document.getElementById('appointments-scoring');
+      const t3 = document.getElementById('user-profile-button');
+      const m3 = document.getElementById('user-profile-menu');
+      function closeTeacher(){ [m1,m2,m3].forEach(x=>{ if(x){ x.classList.add('hidden'); x.classList.remove('show'); } }); }
+      if(t1 && m1) t1.addEventListener('click', e=>{ const h=m1.classList.contains('hidden'); closeTeacher(); if(h){ m1.classList.remove('hidden'); setTimeout(()=>m1.classList.add('show'),10);} e.stopPropagation(); });
+      if(t2 && m2) t2.addEventListener('click', e=>{ const h=m2.classList.contains('hidden'); closeTeacher(); if(h){ m2.classList.remove('hidden'); setTimeout(()=>m2.classList.add('show'),10);} e.stopPropagation(); });
+      if(t3 && m3) t3.addEventListener('click', e=>{ const h=m3.classList.contains('hidden'); closeTeacher(); if(h){ m3.classList.remove('hidden'); setTimeout(()=>m3.classList.add('show'),10);} e.stopPropagation(); });
+      document.addEventListener('click', closeTeacher);
+      document.querySelectorAll('.dropdown-menu')?.forEach(d=> d.addEventListener('click', e=> e.stopPropagation()));
+    });
+  </script>
 
-            uploadProjectButton.addEventListener('click', function(event) {
-                closeAllMenus();
-                uploadProjectMenu.classList.toggle('hidden');
-                event.stopPropagation();
-            });
-
-            document.addEventListener('click', function(event) {
-                if (!userMenuButton.contains(event.target) && !uploadProjectButton.contains(event.target)) {
-                    closeAllMenus();
-                }
-            });
-
-        });
-    </script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>
+{% endwith %}

@@ -1,4 +1,4 @@
-{% extends 'base3.html' %}
+{% extends 'base.html' %}
 
 {% block title %}คะแนนโครงงานนักศึกษาทั้งหมด{% endblock %}
 
@@ -100,7 +100,15 @@
                                             {{ student.average }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ student.evaluations }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+    {% for ev in student.evaluations %}
+        <div class="mb-1">
+            {{ ev.teacher }}: {{ ev.score }}{% if ev.grade %} ({{ ev.grade }}){% endif %}
+        </div>
+    {% empty %}
+        <span class="text-gray-400 italic">ยังไม่มีคะแนน</span>
+    {% endfor %}
+</td>
                                 </tr>
                                 {% endfor %}
                             {% endfor %}

@@ -44,17 +44,17 @@ INSTALLED_APPS = [
 ]
 TAILWIND_APP_NAME = 'theme'
 MIDDLEWARE = [
-    #'myapp.middleware.NoCacheMiddleware', 
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # ✅ ต้องมาก่อน
+    "allauth.account.middleware.AccountMiddleware",              # ✅ อันนี้ก็ตาม
+    "myapp.middleware.LoginRequiredMiddleware",                  # ✅ แล้วค่อย Middleware ของคุณ
+    
+    "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "myapp.middleware.LoginRequiredMiddleware",  
-    'django.contrib.messages.middleware.MessageMiddleware', 
-
 ]
 
 ROOT_URLCONF = "project.urls"
@@ -127,18 +127,20 @@ AUTHENTICATION_BACKENDS = (
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['email', 'profile'],
-        'AUTH_PARAMS': {'access_type': 'online'},
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',   # ✅ เพิ่มบรรทัดนี้
+        },
         'OAUTH_PKCE_ENABLED': True,
     }
 }
-
+SOCIALACCOUNT_LOGIN_ON_GET = True  
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -159,7 +161,6 @@ AUTH_USER_MODEL = "myapp.Member"
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # ใช้ใน local development
 SOCIAL_AUTH_GOOGLE_CLIENT_ID = '841831766925-di1tbo665fs3o930i27026ih1bc0osqq.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_SECRET = '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'
-LOGIN_REDIRECT_URL = '/' 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # ใช้ backend SMTP ในการส่งอีเมล
 EMAIL_HOST = 'smtp.gmail.com'  # ใช้ Gmail SMTP server
 EMAIL_PORT = 587  # Port 587 ใช้สำหรับการเชื่อมต่อแบบ TLS
@@ -167,9 +168,9 @@ EMAIL_USE_TLS = True  # เปิดใช้งานการเชื่อ�
 EMAIL_HOST_USER = 'appointmentx9@gmail.com'  # ใช้อีเมลของคุณในการส่ง
 EMAIL_HOST_PASSWORD = 'uvzx ejpp qaih jyhp'  # รหัสผ่านของอีเมลของคุณ
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # กำหนดค่าให้เป็นอีเมลเดียวกันกับที่ใช้ส่ง
-SOCIALACCOUNT_LOGIN_ON_GET = True  # ให้เข้าสู่ระบบ Google OAuth ทันทีเมื่อกดลิงก์
-LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/redirect-after-login/'
 LOGOUT_REDIRECT_URL = '/login/'
+SOCIALACCOUNT_AUTO_SIGNUP = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 ALLOWED_HOSTS = ['*']  
 # เพิ่ม/แก้ไขการตั้งค่าเหล่านี้

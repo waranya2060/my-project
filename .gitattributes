@@ -1,0 +1,18 @@
+# สำหรับไฟล์ขนาดใหญ่ เช่น รูปภาพและไฟล์ที่ไม่ควรเก็บใน repository ปกติ
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+
+# ตั้งค่าให้ไฟล์ .json ใช้ LF line endings
+*.json text eol=lf
+
+# ตั้งค่าให้ไฟล์ .txt ใช้ LF line endings
+*.txt text eol=lf
+
+# ตั้งค่าให้ไฟล์ .env ใช้ LF line endings
+*.env text eol=lf
+
+# ตั้งค่าให้ไฟล์ที่เป็นไฟล์ log จะไม่ถูกติดตาม
+*.log -text
+
+# ตั้งค่าไฟล์ .gitignore ให้ไม่ถูกเปลี่ยนแปลงบรรทัดสิ้นสุด
+.gitignore text eol=lf

@@ -1,49 +1,71 @@
 
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
 
 class Member(AbstractUser):
-    role = models.IntegerField(default=1)  # Add default role as 1 for students or another as needed.
-    
-    def is_student(self):
-        return self.role == 1
-    
-    def is_teacher(self):
-        return self.role in [2, 3]
-    
-    def is_manager(self):
-        return self.role == 3
+    ROLE_CHOICES = [
+        ('student',  'นักเรียน'),
+        ('teacher',  'อาจารย์'),
+        ('manager',  'อาจารย์ประจำวิชา'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
 
-    
+   
+    def is_student(self):
+        return self.role == 'student'
+
+    def is_teacher(self):
+        return self.role in 'teacher'
+
+    def is_manager(self):
+        return self.role == 'manager'
+
+
 class Student(Member):
     student_id = models.CharField(max_length=13, unique=True, null=True, blank=True)
+
     def save(self, *args, **kwargs):
-        self.role = 1  # นักศึกษา
+        self.role = 'student'
         super().save(*args, **kwargs)
-    member_ptr = models.OneToOneField(Member, on_delete=models.CASCADE, related_name="student", parent_link=True)
+
+    member_ptr = models.OneToOneField(
+        Member, on_delete=models.CASCADE,
+        related_name='student', parent_link=True
+    )
+
 
 class Teacher(Member):
     def save(self, *args, **kwargs):
-        self.role = 2  # อาจารย์
+        self.role = 'teacher'
         super().save(*args, **kwargs)
 
-    member_ptr = models.OneToOneField(Member, on_delete=models.CASCADE, related_name="teacher", parent_link=True)
+    member_ptr = models.OneToOneField(
+        Member, on_delete=models.CASCADE,
+        related_name='teacher', parent_link=True
+    )
+
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-    
+        return f'{self.first_name} {self.last_name}'
+
+
 class Manager(Member):
-     def save(self, *args, **kwargs):
-        self.role = 3  # อาจารย์
+    def save(self, *args, **kwargs):
+        self.role = 'manager'
         super().save(*args, **kwargs)
+
 
 class News(models.Model):
     topic = models.CharField(max_length=255)
     detail = models.TextField()
-    url = models.URLField(blank=True, null=True) 
+    url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    def get_author_name(self):
+        return f"{self.created_by.first_name} {self.created_by.last_name}"
 
 
 class Project(models.Model):
@@ -102,12 +124,16 @@ class File(models.Model):
     def __str__(self):
         return f"File for {self.project.title}"
 
+
 class Score(models.Model):
     project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='scores')
     student = models.ForeignKey('Student', on_delete=models.CASCADE)  # เปลี่ยนจาก ManyToManyField เป็น ForeignKey
     teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)  # อาจารย์ที่ให้คะแนน
     score = models.IntegerField()
     comment = models.TextField()
+    grade = models.CharField(max_length=2, blank=True, null=True) 
 
     def __str__(self):
         return f"Score for {self.project.topic} - {self.student.get_full_name}"
+
+
