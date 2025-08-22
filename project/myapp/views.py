@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 # ===== Third-party =====
 import pandas as pd
 from google_auth_oauthlib.flow import InstalledAppFlow
-
+from urllib.parse import urlparse
 # ===== Django =====
 from django.conf import settings
 from django.contrib import messages
@@ -292,31 +292,44 @@ def upload_project(request):
 @login_required
 def search_students(request):
     term = request.GET.get('term', '').strip()
+    print(f"Search term: '{term}'")
+    
     if not term:
         return JsonResponse([], safe=False)
 
-    students = (
-        Student.objects.filter(
-            Q(student_id__icontains=term)
-            | Q(first_name__icontains=term)
-            | Q(last_name__icontains=term)
-        )
-        .exclude(id=getattr(getattr(request.user, 'student', None), 'id', None))
-        [:10]
-    )
+    try:
+        # ใช้ Q objects อย่างถูกต้อง
+        from django.db.models import Q
+        
+        students = Student.objects.filter(
+            Q(student_id__icontains=term) |
+            Q(first_name__icontains=term) |
+            Q(last_name__icontains=term) |
+            Q(first_name_th__icontains=term) |  # ถ้ามี field ภาษาไทย
+            Q(last_name_th__icontains=term)     # ถ้ามี field ภาษาไทย
+        )[:10]
+        
+        # ตรวจสอบการ exclude
+        current_student_id = getattr(request.user.student, 'id', None) if hasattr(request.user, 'student') else None
+        if current_student_id:
+            students = students.exclude(id=current_student_id)
 
-    results = []
-    for s in students:
-        if s.student_id:
-            results.append(
-                {
-                    'id': s.id,
-                    'student_id': s.student_id,
-                    'first_name': s.first_name or '',
-                    'last_name': s.last_name or '',
-                }
-            )
-    return JsonResponse(results, safe=False)
+        results = []
+        for s in students:
+            results.append({
+                'id': s.id,
+                'student_id': s.student_id or '',
+                'first_name': s.first_name or '',
+                'last_name': s.last_name or '',
+                'full_name': f"{s.first_name or ''} {s.last_name or ''}".strip(),
+            })
+        
+        print(f"Returning {len(results)} results")
+        return JsonResponse(results, safe=False)
+        
+    except Exception as e:
+        print(f"Error in search_students: {e}")
+        return JsonResponse([], safe=False)
 
 
 @login_required
@@ -1134,29 +1147,35 @@ def add_news(request):
     return render(request, 'teacher/teacher_news.html', {'form': form, 'is_add_mode': True})
 
 
+
 def send_news_notification(news):
-    student_members = Member.objects.filter(role='student')
-    recipient_list = [m.email for m in student_members if m.email]
+    try:
+        student_members = Member.objects.filter(role='student')
+        recipient_list = [m.email for m in student_members if m.email]
 
-    if recipient_list:
-        subject = f"แจ้งเตือนข่าวสารใหม่: {news.topic}"
-        html_message = render_to_string('email/news_notification.html', {'news': news})
-        plain_message = strip_tags(html_message)
+        if recipient_list:
+            subject = f"แจ้งเตือนข่าวสารใหม่: {news.topic}"
+            html_message = render_to_string('email/news_notification.html', {'news': news})
+            plain_message = strip_tags(html_message)
 
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=recipient_list,
-            html_message=html_message,
-            fail_silently=False,
-        )
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=recipient_list,
+                html_message=html_message,
+                fail_silently=True,  # เปลี่ยนเป็น True เพื่อไม่ให้เกิด error
+            )
+            logger.info(f"Sent news notification to {len(recipient_list)} recipients")
 
-    # ลบข่าวเก่าที่เกิน 2 วัน
+    except Exception as e:
+        logger.error(f"Error sending news notification: {e}")
+        # ไม่ต้อง raise error เพื่อไม่ให้กระทบการทำงานหลัก
+
+    
     current_date = timezone.now()
     two_days_ago = current_date - timedelta(days=2)
     News.objects.filter(created_at__lt=two_days_ago).delete()
-
 
 # ----------------------------------------------------------------------------
 # Scoring / Evaluation
@@ -1198,7 +1217,6 @@ def assign_score(request):
 @login_required
 def all_projects(request):
     selected_year = request.GET.get('year', '')
-
     projects = (
         Project.objects.all()
         .prefetch_related(
@@ -1207,6 +1225,7 @@ def all_projects(request):
             Prefetch('files', queryset=File.objects.all()),
         )
         .select_related('advisor')
+        
     )
 
     if selected_year:
@@ -1224,9 +1243,12 @@ def all_projects(request):
 
                 domain = urlparse(f.url).netloc
                 external_links.append({'url': f.url, 'domain': domain})
-
+        a = project.appointment_set.last()
+        if not a: d= timezone.now().date()
+        else: d = a.date
         project_data.append(
             {
+                'date': d,
                 'project_id': project.id,
                 'project_topic': project.topic,
                 'student_ids': ", ".join([s.student_id for s in project.students.all() if s.student_id]),
@@ -1245,12 +1267,15 @@ def all_projects(request):
         request,
         'manager/all_projects.html',
         {
+
             'project_data': project_data,
             'years': years,
             'selected_year': selected_year,
             'all_teachers': Teacher.objects.all(),
+            
         },
     )
+
 
 
 @login_required
@@ -1268,43 +1293,64 @@ def export_projects_csv(request):
         content_type='text/csv; charset=utf-8-sig',
         headers={'Content-Disposition': f'attachment; filename="{filename}"'},
     )
+    writer = csv.writer(response, lineterminator='\n')
 
-    writer = csv.writer(response)
-    writer.writerow(['หัวข้อโครงงาน', 'รหัสนักศึกษา', 'ชื่อนักศึกษา', 'ปี', 'อาจารย์ที่ปรึกษา', 'กรรมการ', 'ไฟล์', 'ลิงก์'])
+    # หัวตาราง
+    writer.writerow([
+        'วันที่นัดล่าสุด', 'หัวข้อโครงงาน', 'รหัสนักศึกษา', 'ชื่อนักศึกษา', 'ปี',
+        'อาจารย์ที่ปรึกษา', 'กรรมการ', 'ไฟล์', 'ลิงก์'
+    ])
 
-    projects = projects.prefetch_related('students', 'committee', 'files').select_related('advisor')
+    projects = projects.prefetch_related('students', 'committee', 'files', 'appointment_set').select_related('advisor')
 
     for project in projects:
-        uploaded_files = []
-        external_links = []
+        uploaded_files, external_links = [], []
+
+        # ดึงวันที่ล่าสุดแบบง่ายๆ เหมือนใน all_projects
+        a = project.appointment_set.last()
+        if not a: 
+            d = timezone.now().date()
+        else: 
+            d = a.date
+        
+        appt_date_str = d.strftime('%Y-%m-%d') if d else ''
 
         for f in project.files.all():
-            if f.file:
-                file_name = os.path.basename(f.file.name)
-                uploaded_files.append(
-                    f'=HYPERLINK("{request.build_absolute_uri(f.file.url)}","{file_name}")'
-                )
-            elif f.url:
-                from urllib.parse import urlparse
+            # ไฟล์อัปโหลด
+            if getattr(f, 'file', None) and hasattr(f.file, 'url'):
+                file_name = os.path.basename(getattr(f.file, 'name', '') or '').replace('"', '”')
+                absolute_url = request.build_absolute_uri(f.file.url)
+                uploaded_files.append(f'=HYPERLINK("{absolute_url}","{file_name or "ไฟล์"}")')
 
-                domain = urlparse(f.url).netloc
-                external_links.append(f'=HYPERLINK("{f.url}","{domain}")')
+            # ลิงก์ภายนอก
+            url_raw = (getattr(f, 'url', '') or '').strip()
+            if url_raw:
+                url = url_raw
+                parsed = urlparse(url)
+                if not parsed.scheme:
+                    url = 'https://' + url
+                    parsed = urlparse(url)
+                domain = (parsed.netloc or parsed.path.split('/')[0] or url).replace('"', '”')
+                external_links.append(f'=HYPERLINK("{url}","{domain}")')
 
-        writer.writerow(
-            [
-                project.topic,
-                ", ".join([str(s.student_id) for s in project.students.all() if s.student_id]),
-                ", ".join([s.get_full_name() for s in project.students.all()]),
-                project.year,
-                project.advisor.get_full_name(),
-                ", ".join([t.get_full_name() for t in project.committee.all()]),
-                "\n".join(uploaded_files) if uploaded_files else 'ไม่มีไฟล์',
-                "\n".join(external_links) if external_links else 'ไม่มีลิงก์',
-            ]
-        )
+        student_ids = ", ".join([str(s.student_id) for s in project.students.all() if getattr(s, 'student_id', None)])
+        student_names = ", ".join([s.get_full_name() for s in project.students.all()])
+        advisor_name = getattr(project.advisor, 'get_full_name', lambda: '')() if getattr(project, 'advisor', None) else ''
+        committee_names = ", ".join([t.get_full_name() for t in project.committee.all()])
+
+        writer.writerow([
+            appt_date_str,
+            project.topic,
+            student_ids,
+            student_names,
+            project.year,
+            advisor_name,
+            committee_names,
+            "\n".join(uploaded_files) if uploaded_files else 'ไม่มีไฟล์',
+            "\n".join(external_links) if external_links else 'ไม่มีลิงก์',
+        ])
 
     return response
-
 
 @login_required
 def update_project_committee(request):

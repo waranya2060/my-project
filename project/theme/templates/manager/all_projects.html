@@ -48,6 +48,7 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
+                    <th class="p-3 text-left text-xs from-medium text-gray-500 uppercase tracking-wider">วันที่นัดหมาย</th>
                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หัวข้อโครงงาน</th>
                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสนักศึกษา</th>
                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อนักศึกษา</th>
@@ -60,8 +61,10 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
+                
                 {% for data in project_data %}
                 <tr class="hover:bg-gray-50">
+                    <td class="p-3 text-sm text-gray-900">{{ data.date|date:"d/m/Y" }}</td>
                     <td class="p-3 text-sm text-gray-900">{{ data.project_topic }}</td>
                     <td class="p-3 text-sm text-gray-900">{{ data.student_ids }}</td>
                     <td class="p-3 text-sm text-gray-900">{{ data.student_names }}</td>
